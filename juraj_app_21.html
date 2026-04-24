@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Juraj">
+<meta name="theme-color" content="#1a1a1a">
+<title>Juraj</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/bootle" rel="stylesheet">
+<style>
+:root{--bg:#1a1a1a;--surface:#242424;--surface2:#2e2e2e;--border:rgba(255,255,255,0.09);--accent:#c8a96e;--accent2:#8ab4d4;--text:#efefef;--muted:rgba(220,220,220,0.45);--danger:#e07070;--success:#70c870;--r:14px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;display:flex;flex-direction:column;height:100dvh}
+
+.topbar{padding:16px 20px 12px;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.08);background:linear-gradient(135deg,#1f1f1f 0%,#252525 50%,#1c1c1c 100%)}
+.topbar h1{font-family:'BOOTLE','DM Serif Display',serif;font-size:32px;font-weight:400;letter-spacing:2px;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.date-line{font-family:'BOOTLE','DM Serif Display',serif;font-size:12px;color:var(--muted);margin-top:5px;letter-spacing:1px}
+.clock{font-family:'BOOTLE','DM Serif Display',serif;font-size:30px;color:var(--accent);line-height:1;text-align:right;letter-spacing:1px;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.nameday-badge{font-size:11px;color:var(--accent);margin-top:4px;letter-spacing:.3px;text-align:right}
+
+.tabs{display:flex;gap:2px;padding:8px 16px;flex-shrink:0;background:#1e1e1e;border-bottom:1px solid rgba(255,255,255,0.06)}
+.tab{flex:1;padding:7px 4px;background:none;border:1px solid transparent;border-radius:8px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:400;cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tab svg{width:18px;height:18px;opacity:.6}
+.tab.active{background:#333333;border-color:rgba(255,255,255,0.12);color:var(--text)}
+.tab.active svg{opacity:1;stroke:var(--accent)}
+
+.content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:12px 16px 24px}
+.panel{display:none}
+.panel.active{display:block}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:10px}
+.card-title{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:10px}
+
+.weather-main{display:flex;align-items:center;justify-content:space-between}
+.weather-temp{font-family:'DM Serif Display',serif;font-size:52px;color:var(--accent);line-height:1}
+.weather-temp sup{font-size:22px;vertical-align:top;margin-top:8px;display:inline-block}
+.weather-desc{font-size:14px;color:var(--muted);margin-top:4px}
+.weather-icon{font-size:52px;line-height:1}
+.weather-dog{margin-top:10px;padding:8px 12px;background:#323232;border-radius:8px;font-size:13px;color:var(--accent2);border-left:3px solid var(--accent2)}
+.weather-extra{display:flex;gap:10px;margin-top:10px}
+.weather-pill{flex:1;background:var(--surface2);border-radius:8px;padding:6px 10px;font-size:11px;color:var(--muted);text-align:center}
+.weather-pill strong{display:block;font-size:13px;color:var(--text);font-weight:400}
+
+.event-item{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)}
+.event-item:last-child{border-bottom:none}
+.event-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.event-dot.birthday{background:#c87070}
+.event-dot.nameday{background:var(--accent)}
+.event-dot.reminder{background:var(--accent2)}
+.event-dot.event{background:#70c8a0}
+.event-content{flex:1}
+.event-title{font-size:14px;font-weight:400}
+.event-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.event-when{font-size:11px;color:var(--muted);flex-shrink:0;margin-top:3px}
+.event-when.today{color:var(--accent);font-weight:500}
+.event-when.tomorrow{color:var(--accent2)}
+
+.quick-input{background:#2a2a2a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;width:100%}
+.quick-input::placeholder{color:var(--muted)}
+.quick-input:focus{border-color:var(--accent)}
+select.quick-input option{background:var(--surface);color:var(--text)}
+.btn-add{background:var(--accent);color:#0a0a0f;border:none;border-radius:10px;padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
+.btn-sm{background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif}
+
+.note-item{background:#2e2e2e;border-radius:10px;padding:12px;margin-bottom:8px;font-size:13px;line-height:1.6;position:relative}
+.note-meta{font-size:11px;color:var(--muted);margin-top:6px}
+.note-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;line-height:1}
+.note-del:hover{color:var(--danger)}
+textarea.note-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;resize:none;outline:none;line-height:1.6;margin-bottom:8px;min-height:80px}
+textarea.note-input:focus{border-color:var(--accent)}
+
+.chat-messages{display:flex;flex-direction:column;gap:10px;margin-bottom:12px;min-height:200px}
+.msg{max-width:88%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6}
+.msg.ai{background:#2a2a2a;border:1px solid rgba(255,255,255,0.09);align-self:flex-start;border-bottom-left-radius:4px}
+.msg.user{background:var(--accent);color:#0a0a0f;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.ai .msg-label{font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.5px}
+.chat-input-row{display:flex;gap:8px}
+.chat-input-row input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none}
+.chat-input-row input:focus{border-color:var(--accent)}
+.btn-send{background:var(--accent);color:#0a0a0f;border:none;border-radius:10px;width:42px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.typing{color:var(--muted);font-size:12px;font-style:italic}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px}
+.cal-head{font-size:10px;color:var(--muted);text-align:center;padding:4px 0;letter-spacing:.5px}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;border-radius:6px;cursor:pointer;position:relative}
+.cal-day:hover{background:var(--surface2)}
+.cal-day.today{background:var(--accent);color:#0a0a0f;font-weight:500}
+.cal-day.has-event::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--accent2)}
+.cal-day.today.has-event::after{background:#0a0a0f}
+.cal-day.other-month{color:rgba(240,237,232,.2)}
+.cal-nav{display:flex;align-items:center;justify-content:space-between}
+.cal-nav button{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 8px}
+.cal-nav button:hover{color:var(--text)}
+.cal-month-label{font-family:'BOOTLE','DM Serif Display',serif;font-size:16px;font-weight:400;letter-spacing:1px}
+
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);font-size:14px}
+.setting-row:last-child{border-bottom:none}
+.setting-row label{color:var(--muted);font-size:12px;margin-top:2px;display:block}
+input.setting-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;width:160px;text-align:right}
+input.setting-input:focus{border-color:var(--accent)}
+
+.content::-webkit-scrollbar{width:3px}
+.content::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:4px}
+.section-hdr h2{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:500;letter-spacing:.3px}
+.badge.gold{background:rgba(200,169,110,.15);color:var(--accent);border:1px solid rgba(200,169,110,.3)}
+.badge.blue{background:rgba(110,158,200,.15);color:var(--accent2);border:1px solid rgba(110,158,200,.3)}
+.badge.red{background:rgba(224,112,112,.15);color:var(--danger);border:1px solid rgba(224,112,112,.3)}
+.badge.green{background:rgba(112,200,112,.15);color:var(--success);border:1px solid rgba(112,200,112,.3)}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;color:var(--muted);font-size:13px;padding:20px 0}
+
+.gym-day{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;transition:all .2s}
+.gym-day.done{border-color:rgba(112,200,112,.3);background:rgba(112,200,112,.05)}
+.gym-day-header{display:flex;align-items:center;gap:12px}
+.gym-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.gym-check.checked{border-color:var(--success);background:var(--success)}
+.gym-check.checked svg{display:block}
+.gym-check svg{display:none;width:14px;height:14px;stroke:#0a0a0f;stroke-width:2.5;fill:none}
+.gym-day-name{font-size:13px;font-weight:500;flex:1}
+.gym-day.done .gym-day-name{color:var(--muted);text-decoration:line-through}
+.gym-detail{font-size:12px;color:var(--muted);margin-top:2px}
+.gym-duration{font-size:11px;color:var(--accent2);background:rgba(110,158,200,.12);border:1px solid rgba(110,158,200,.2);border-radius:4px;padding:2px 7px;flex-shrink:0}
+.gym-week-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.gym-week-hdr h2{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.gym-reset{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.gym-reset:hover{color:var(--text)}
+.gym-streak{font-size:12px;color:var(--accent);font-weight:500}
+.gym-progress{display:flex;gap:6px;margin-bottom:12px}
+.gym-prog-dot{flex:1;height:4px;border-radius:2px;background:var(--surface2)}
+.gym-prog-dot.done{background:var(--success)}
+
+/* ── FINANCE ── */
+.fin-accounts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.fin-account{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:border-color .2s}
+.fin-account:hover{border-color:rgba(200,169,110,.4)}
+.fin-account-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px}
+.fin-account-amount{font-family:'DM Serif Display',serif;font-size:26px;color:var(--accent);line-height:1}
+.fin-account-amount.hotovost{color:var(--success)}
+.fin-account-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.fin-total{background:var(--surface);border:1px solid rgba(200,169,110,.25);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.fin-total-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.fin-total-amount{font-family:'DM Serif Display',serif;font-size:32px;color:var(--accent)}
+.fin-trend{font-size:11px;margin-top:2px}
+.fin-trend.up{color:var(--success)}
+.fin-trend.down{color:var(--danger)}
+.fin-tx-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.fin-tx-item:last-child{border-bottom:none}
+.fin-tx-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.fin-tx-info{flex:1;min-width:0}
+.fin-tx-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fin-tx-meta{font-size:11px;color:var(--muted);margin-top:1px}
+.fin-tx-amount{font-size:14px;font-weight:500;flex-shrink:0}
+.fin-tx-amount.vydavok{color:var(--danger)}
+.fin-tx-amount.prijem{color:var(--success)}
+.fin-tx-del{background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:0 4px;flex-shrink:0}
+.fin-tx-del:hover{color:var(--danger)}
+.fin-cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.fin-cat-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;font-size:10px;color:var(--muted);transition:all .15s}
+.fin-cat-btn:hover,.fin-cat-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(200,169,110,.08)}
+.fin-cat-btn .cat-icon{font-size:18px;display:block;margin-bottom:3px}
+.fin-savings-bar{height:8px;border-radius:4px;background:var(--surface2);margin:8px 0;overflow:hidden}
+.fin-savings-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .6s}
+.fin-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.fin-month-nav button{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 8px}
+.fin-month-nav button:hover{color:var(--text)}
+.fin-csv-area{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;resize:vertical;outline:none;min-height:80px}
+.fin-csv-area:focus{border-color:var(--accent)}
+.fin-tab{display:inline-block;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--muted);border:1px solid transparent}
+.fin-tab.active{background:var(--surface2);border-color:var(--border);color:var(--text)}
+.fin-subtabs{display:flex;gap:4px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;width:100%;">
+    <div>
+      <h1>Juraj</h1>
+      <div class="date-line" id="dateStr">—</div>
+    </div>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+        <div id="syncDot" title="Offline" style="width:7px;height:7px;border-radius:50%;background:#555;flex-shrink:0;margin-top:2px;cursor:pointer;" onclick="switchTab('settings',document.querySelectorAll('.tab')[5])"></div>
+        <div class="clock" id="clock">—</div>
+      </div>
+      <div class="nameday-badge" id="namedayBadge"></div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('dashboard',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Prehľad
+  </button>
+  <button class="tab" onclick="switchTab('calendar',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Kalendár
+  </button>
+  <button class="tab" onclick="switchTab('notes',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
+    Poznámky
+  </button>
+  <button class="tab" onclick="switchTab('gym',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3M6 12h12"/></svg>
+    Gym
+  </button>
+  <button class="tab" onclick="switchTab('ai',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5c0 1.5-1.5 2-2.5 3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>
+    AI
+  </button>
+  <button class="tab" onclick="switchTab('finance',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>
+    Financie
+  </button>
+  <button class="tab" onclick="switchTab('settings',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+    Nastavenia
+  </button>
+</div>
+
+<div class="content">
+
+  <!-- DASHBOARD -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="card" id="weatherCard">
+      <div class="card-title">Počasie · Partizánske</div>
+      <div id="weatherContent"><div style="color:var(--muted);font-size:13px;">Načítavam… <span class="spinner"></span></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Dnes</div>
+      <div id="eventsToday"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Najbližšie dni</div>
+      <div id="eventsUpcoming"></div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="panel" id="panel-calendar">
+    <div class="card">
+      <div class="cal-nav">
+        <button onclick="calNav(-1)">&#8249;</button>
+        <span class="cal-month-label" id="calMonthLabel"></span>
+        <button onclick="calNav(1)">&#8250;</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+    <div class="section-hdr"><h2>Pridať udalosť</h2></div>
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <input class="quick-input" id="evtTitle" placeholder="Názov udalosti">
+        <div style="display:flex;gap:8px;">
+          <input type="date" class="quick-input" id="evtDate" style="flex:1">
+          <input type="time" class="quick-input" id="evtTime" style="width:100px">
+        </div>
+        <select class="quick-input" id="evtType">
+          <option value="event">Udalosť</option>
+          <option value="birthday">Narodeniny</option>
+          <option value="reminder">Pripomienka</option>
+        </select>
+        <button class="btn-add" onclick="addEvent()" style="width:100%">Pridať</button>
+      </div>
+    </div>
+    <div class="section-hdr"><h2>Všetky udalosti</h2><button class="btn-sm" onclick="clearEvents()">Vymazať všetky</button></div>
+    <div id="allEvents"></div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="panel" id="panel-notes">
+    <textarea class="note-input" id="noteText" placeholder="Napíš poznámku…" rows="3"></textarea>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <select class="quick-input" id="noteTag" style="flex:1">
+        <option value="general">Všeobecné</option>
+        <option value="idea">Nápad</option>
+        <option value="decision">Rozhodnutie</option>
+        <option value="log">Log</option>
+      </select>
+      <button class="btn-add" onclick="addNote()">Uložiť</button>
+    </div>
+    <div id="notesList"></div>
+  </div>
+
+
+  <!-- GYM -->
+  <div class="panel" id="panel-gym">
+    <div class="gym-week-hdr">
+      <h2>Fitcentrum 365 Topoľčany</h2>
+      <button class="gym-reset" onclick="gymReset()">Reset týždňa</button>
+    </div>
+    <div id="gymProgress" class="gym-progress"></div>
+    <div id="gymStreak" style="font-size:12px;color:var(--accent);margin-bottom:10px;"></div>
+    <div id="gymDays"></div>
+    <div style="margin-top:8px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);">
+      <div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:8px;">Tento mesiac</div>
+      <div id="gymStats" style="font-size:13px;color:var(--muted);"></div>
+    </div>
+  </div>
+
+  <!-- AI -->
+  <div class="panel" id="panel-ai">
+    <div class="card">
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg ai"><div class="msg-label">JURAJ HQ · AI</div>Ahoj Juraj! Som tvoj osobný asistent. Pomôžem ti s čímkoľvek — plánovaním, otázkami, rozhodnutiami. Čo potrebuješ?</div>
+      </div>
+      <div class="chat-input-row">
+        <input id="chatInput" placeholder="Napíš správu…" onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn-send" onclick="sendChat()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- FINANCIE -->
+  <div class="panel" id="panel-finance">
+
+    <!-- Sub-tabs -->
+    <div class="fin-subtabs">
+      <span class="fin-tab active" onclick="finSubTab('prehled',this)">Prehľad</span>
+      <span class="fin-tab" onclick="finSubTab('transakcie',this)">Transakcie</span>
+      <span class="fin-tab" onclick="finSubTab('pridat',this)">+ Pridať</span>
+      <span class="fin-tab" onclick="finSubTab('import',this)">Import CSV</span>
+    </div>
+
+    <!-- PREHĽAD -->
+    <div id="fin-prehled">
+      <!-- Accounts -->
+      <div class="fin-accounts">
+        <div class="fin-account" onclick="finEditAccount('unicredit')">
+          <div class="fin-account-label">UniCredit bežný</div>
+          <div class="fin-account-amount" id="fin-uc-amount">— €</div>
+          <div class="fin-account-sub" id="fin-uc-date">Klikni pre aktualizáciu</div>
+        </div>
+        <div class="fin-account" onclick="finEditAccount('hotovost')">
+          <div class="fin-account-label">Hotovosť (trezor)</div>
+          <div class="fin-account-amount hotovost" id="fin-cash-amount">— €</div>
+          <div class="fin-account-sub" id="fin-cash-date">Klikni pre aktualizáciu</div>
+        </div>
+      </div>
+      <!-- Total -->
+      <div class="fin-total">
+        <div>
+          <div class="fin-total-label">Celkovo nasporené</div>
+          <div class="fin-total-amount" id="fin-total">— €</div>
+          <div class="fin-trend" id="fin-trend"></div>
+        </div>
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="rgba(200,169,110,0.3)" stroke-width="1.5"><path d="M8 36 L16 24 L24 30 L32 18 L40 12" stroke="rgba(200,169,110,0.6)" stroke-width="2"/></svg>
+      </div>
+      <!-- This month summary -->
+      <div class="card">
+        <div class="fin-month-nav">
+          <button onclick="finMonthNav(-1)">&#8249;</button>
+          <span style="font-family:'DM Serif Display',serif;font-size:15px;" id="finMonthLabel"></span>
+          <button onclick="finMonthNav(1)">&#8250;</button>
+        </div>
+        <div id="fin-month-summary"></div>
+      </div>
+      <!-- Savings history -->
+      <div class="card">
+        <div class="card-title">História zostatkov</div>
+        <div id="fin-history"></div>
+      </div>
+    </div>
+
+    <!-- TRANSAKCIE -->
+    <div id="fin-transakcie" style="display:none">
+      <div class="card">
+        <div class="card-title" id="fin-tx-month-title">Transakcie</div>
+        <div id="fin-tx-list"></div>
+      </div>
+    </div>
+
+    <!-- PRIDAŤ -->
+    <div id="fin-pridat" style="display:none">
+      <div class="card">
+        <div class="card-title">Nová transakcia</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <!-- Type toggle -->
+          <div style="display:flex;gap:6px;">
+            <button id="fin-type-vydavok" class="btn-add" onclick="finSetType('vydavok')" style="flex:1;background:var(--danger);opacity:1">− Výdavok</button>
+            <button id="fin-type-prijem" class="btn-sm" onclick="finSetType('prijem')" style="flex:1">+ Príjem</button>
+          </div>
+          <!-- Amount -->
+          <input type="number" class="quick-input" id="fin-amount" placeholder="Suma v €" step="0.01" min="0">
+          <!-- Description -->
+          <input class="quick-input" id="fin-desc" placeholder="Popis (napr. Lidl, plat...)">
+          <!-- Categories -->
+          <div class="fin-cat-grid" id="fin-cats"></div>
+          <!-- Account -->
+          <select class="quick-input" id="fin-account-sel">
+            <option value="unicredit">UniCredit bežný</option>
+            <option value="hotovost">Hotovosť</option>
+          </select>
+          <!-- Date -->
+          <input type="date" class="quick-input" id="fin-date">
+          <button class="btn-add" onclick="finAddTx()" style="width:100%">Pridať transakciu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMPORT CSV -->
+    <div id="fin-import" style="display:none">
+      <!-- EMAIL PARSING -->
+      <div class="card">
+        <div class="card-title">📧 Vložiť email od UniCredit</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.8;">
+          Skopíruj text emailu <strong style="color:var(--accent)">„Informácia o zostatku"</strong><br>
+          od unicreditbank@unicreditgroup.sk a vlož sem:
+        </div>
+        <textarea class="fin-csv-area" id="fin-email-input" placeholder="Dobrý deň,&#10;&#10;posielame Vám pravidelnú informáciu o výške zostatku...&#10;&#10;Disponibilný zostatok: 109.47 EUR" style="min-height:120px;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn-add" onclick="finParseEmail()" style="flex:1">Načítať zostatok</button>
+          <button class="btn-sm" onclick="document.getElementById('fin-email-input').value=''">Vymazať</button>
+        </div>
+        <div id="fin-email-result" style="font-size:13px;margin-top:8px;"></div>
+      </div>
+
+      <!-- CSV IMPORT -->
+      <div class="card" style="margin-top:0">
+        <div class="card-title">Import výpisu (CSV)</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.7;">
+          UniCredit Online Banking → Výpisy → Export CSV
+        </div>
+        <textarea class="fin-csv-area" id="fin-csv-input" placeholder="Vlož CSV obsah tu...&#10;&#10;Formát: dátum;popis;suma;mena;zostatok"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn-add" onclick="finImportCSV()" style="flex:1">Importovať transakcie</button>
+          <button class="btn-sm" onclick="document.getElementById('fin-csv-input').value=''">Vymazať</button>
+        </div>
+        <div id="fin-import-result" style="font-size:12px;margin-top:8px;"></div>
+      </div>
+      <div class="card" style="margin-top:0">
+        <div class="card-title">Ručná aktualizácia zostatku</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:13px;color:var(--muted);width:130px;flex-shrink:0">UniCredit zostatok</span>
+            <input type="number" class="quick-input" id="fin-uc-manual" placeholder="0.00" step="0.01" style="flex:1">
+            <span style="color:var(--muted);font-size:13px;">€</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:13px;color:var(--muted);width:130px;flex-shrink:0">Hotovosť (trezor)</span>
+            <input type="number" class="quick-input" id="fin-cash-manual" placeholder="0.00" step="0.01" style="flex:1">
+            <span style="color:var(--muted);font-size:13px;">€</span>
+          </div>
+          <button class="btn-add" onclick="finSaveBalances()" style="width:100%">Uložiť zostatky</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="panel" id="panel-settings">
+    <div class="card">
+      <div class="card-title">Osobné nastavenia</div>
+      <div class="setting-row"><div><span>Meno</span><label>Zobrazené v appke</label></div><input class="setting-input" id="cfg-name" placeholder="Juraj"></div>
+      <div class="setting-row"><div><span>Dátum narodenia</span><label>Pre upozornenie</label></div><input type="date" class="setting-input" id="cfg-birthday"></div>
+      <div class="setting-row"><div><span>Tvoje meno (meniny)</span><label>Upozorní ťa na tvoje meniny</label></div><input class="setting-input" id="cfg-nameday-name" placeholder="Juraj"></div>
+      <div class="setting-row"><div><span>Ranná prechádzka</span><label>Čas — upozornenie na počasie</label></div><input type="time" class="setting-input" id="cfg-dog-time" value="05:15"></div>
+      <div class="setting-row"><div><span>Mesto</span><label>Pre počasie</label></div><input class="setting-input" id="cfg-city" placeholder="Partizánske"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Sledované meniny (priatelia &amp; rodina)</div>
+      <div id="friendsList"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <input class="quick-input" id="friendName" placeholder="Meno" style="flex:1">
+        <button class="btn-add" onclick="addFriend()">+</button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:0">
+      <div class="card-title">☁️ Google Sheets sync</div>
+      <div class="setting-row">
+        <div><span>Web App URL</span><label>Z Google Apps Script</label></div>
+      </div>
+      <input class="quick-input" id="cfg-gas-url" placeholder="https://script.google.com/macros/s/..." style="margin-bottom:8px;font-size:11px;">
+      <div style="display:flex;gap:8px;">
+        <button class="btn-add" onclick="saveGasUrl()" style="flex:1">Pripojiť</button>
+        <button class="btn-sm" onclick="syncFromSheets()">Sync</button>
+        <button class="btn-sm" onclick="pushAllToSheets()" style="color:var(--accent2)">↑ Export</button>
+      </div>
+      <div id="gasStatus" style="font-size:11px;color:var(--muted);margin-top:6px;"></div>
+    </div>
+    <div style="margin-top:12px;"><button class="btn-add" onclick="saveSettings()" style="width:100%">Uložiť nastavenia</button></div>
+    <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px;line-height:1.8;">Juraj HQ v1.0 · Osobný dashboard<br>Dáta uložené lokálne · otvorí sa ako appka na iPhone cez Safari → Pridať na plochu</div>
+  </div>
+
+</div>
+
+<script>
+const NAMEDAYS={"01-01":"","01-02":"Alexandra","01-03":"Daniela","01-04":"Drahoslav","01-05":"Andrea","01-06":"Antónia","01-07":"Bohuslava","01-08":"Severín","01-09":"Alexej","01-10":"Dáša","01-11":"Malvína","01-12":"Ernest","01-13":"Rastislav","01-14":"Radovan","01-15":"Dobroslav","01-16":"Kristína","01-17":"Nataša","01-18":"Bohdana","01-19":"Drahomíra","01-20":"Dalibor","01-21":"Vincent","01-22":"Zora","01-23":"Miloš","01-24":"Timotej","01-25":"Gejza","01-26":"Tamara","01-27":"Bohuš","01-28":"Alfonz","01-29":"Gašpar","01-30":"Ema","01-31":"Erika","02-01":"Tatiana","02-02":"Erik","02-03":"Blažej","02-04":"Veronika","02-05":"Agáta","02-06":"Dorota","02-07":"Vanda","02-08":"Zoja","02-09":"Zdenko","02-10":"Gabriela","02-11":"Dezider","02-12":"Perla","02-13":"Arpád","02-14":"Valentín","02-15":"Pravoslav","02-16":"Ida","02-17":"Miloslava","02-18":"Jaromír","02-19":"Vlasta","02-20":"Lívia","02-21":"Eleonóra","02-22":"Etela","02-23":"Roman","02-24":"Matej","02-25":"Frederik","02-26":"Viktor","02-27":"Alexander","02-28":"Zlatica","02-29":"Radomír","03-01":"Albín","03-02":"Anežka","03-03":"Bohumila","03-04":"Kazimír","03-05":"Fridrich","03-06":"Tomáš","03-07":"Tomáš","03-08":"Alan","03-09":"Franc","03-10":"Branislav","03-11":"Anežka","03-12":"Gregor","03-13":"Dionýz","03-14":"Matilda","03-15":"Svetlana","03-16":"Boleslav","03-17":"Patrik","03-18":"Eduard","03-19":"Jozef","03-20":"Víťazoslav","03-21":"Blahoslav","03-22":"Beňadik","03-23":"Adrián","03-24":"Gabriel","03-25":"Marián","03-26":"Emanuel","03-27":"Alžbeta","03-28":"Sonia","03-29":"Miroslav","03-30":"Vieroslava","03-31":"Benjamín","04-01":"Hugo","04-02":"Zita","04-03":"Richard","04-04":"Izidor","04-05":"Miroslava","04-06":"Irena","04-07":"Zoltán","04-08":"Albert","04-09":"Milena","04-10":"Igor","04-11":"Július","04-12":"Estera","04-13":"Aleš","04-14":"Justína","04-15":"Fedor","04-16":"Dana","04-17":"Rudolf","04-18":"Valér","04-19":"Jela","04-20":"Marcel","04-21":"Ervín","04-22":"Slavomír","04-23":"Vojtech","04-24":"Juraj","04-25":"Marek","04-26":"Jaroslava","04-27":"Jaroslav","04-28":"Jarmila","04-29":"Lea","04-30":"Anastázia","05-01":"","05-02":"Zigmund","05-03":"Galina","05-04":"Florián","05-05":"Lesana","05-06":"Hermína","05-07":"Monika","05-08":"Ingrida","05-09":"Roland","05-10":"Viktória","05-11":"Blažena","05-12":"Pankrác","05-13":"Servác","05-14":"Bonifác","05-15":"Žofia","05-16":"Svetozár","05-17":"Gizela","05-18":"Viola","05-19":"Gertrúda","05-20":"Bernard","05-21":"Zina","05-22":"Júlia","05-23":"Želmíra","05-24":"Ela","05-25":"Urban","05-26":"Dušan","05-27":"Iveta","05-28":"Viliam","05-29":"Viliam","05-30":"Ferdinand","05-31":"Petronela","06-01":"Žaneta","06-02":"Xénia","06-03":"Karolína","06-04":"Lenka","06-05":"Laura","06-06":"Norbert","06-07":"Róbert","06-08":"Medard","06-09":"Stanislava","06-10":"Margaréta","06-11":"Dobroslava","06-12":"Antónia","06-13":"Anton","06-14":"Vasil","06-15":"Vít","06-16":"Blanka","06-17":"Adolf","06-18":"Vratislav","06-19":"Alfréd","06-20":"Valéria","06-21":"Alojz","06-22":"Paulína","06-23":"Sidónia","06-24":"Ján","06-25":"Tadeáš","06-26":"Adriána","06-27":"Ladislav","06-28":"Beáta","06-29":"Peter","06-30":"Melánia","07-01":"Diana","07-02":"Berta","07-03":"Miloslav","07-04":"Prokop","07-05":"Cyril","07-06":"Patrícia","07-07":"Oliver","07-08":"Ivan","07-09":"Lujza","07-10":"Amália","07-11":"Milota","07-12":"Nina","07-13":"Margita","07-14":"Kamil","07-15":"Henrich","07-16":"Drahomír","07-17":"Bohuslav","07-18":"Kamila","07-19":"Dušana","07-20":"Iľja","07-21":"Daniel","07-22":"Magdaléna","07-23":"Ľubomíra","07-24":"Vladimír","07-25":"Jakub","07-26":"Anna","07-27":"Božena","07-28":"Krištof","07-29":"Marta","07-30":"Libuša","07-31":"Ignác","08-01":"Božidara","08-02":"Gustáv","08-03":"Jerguš","08-04":"Dominik","08-05":"Hortenzia","08-06":"Jozefína","08-07":"Štefánia","08-08":"Oskar","08-09":"Ľubomír","08-10":"Vavrinec","08-11":"Zuzana","08-12":"Darina","08-13":"Ľuboslava","08-14":"Mojmír","08-15":"Marcela","08-16":"Leonard","08-17":"Milica","08-18":"Elena","08-19":"Lýdia","08-20":"Anabela","08-21":"Jana","08-22":"Tichomír","08-23":"Filip","08-24":"Bartolomej","08-25":"Ľudovít","08-26":"Samuel","08-27":"Silvia","08-28":"Augustín","08-29":"Nikola","08-30":"Ružena","08-31":"Nora","09-01":"Darina","09-02":"Linda","09-03":"Belo","09-04":"Rozália","09-05":"Regína","09-06":"Alica","09-07":"Marianna","09-08":"Mária","09-09":"Martina","09-10":"Oľga","09-11":"Bystrík","09-12":"Mária","09-13":"Ctibor","09-14":"Ľuboš","09-15":"Jolana","09-16":"Ľudomila","09-17":"Olympia","09-18":"Eugénia","09-19":"Konštantín","09-20":"Ľuboslav","09-21":"Matúš","09-22":"Móric","09-23":"Zdenka","09-24":"Ľuboš","09-25":"Vladislav","09-26":"Edita","09-27":"Cyprián","09-28":"Václav","09-29":"Michal","09-30":"Jarolím","10-01":"Arnold","10-02":"Levoslav","10-03":"Stela","10-04":"František","10-05":"Viera","10-06":"Natália","10-07":"Eliška","10-08":"Brigita","10-09":"Dionýz","10-10":"Slavomíra","10-11":"Valentína","10-12":"Maximilián","10-13":"Koloman","10-14":"Boris","10-15":"Terézia","10-16":"Vladimíra","10-17":"Hedviga","10-18":"Lukáš","10-19":"Kristián","10-20":"Vendelín","10-21":"Uršuľa","10-22":"Sergej","10-23":"Alojzia","10-24":"Kvetoslava","10-25":"Aurel","10-26":"Demeter","10-27":"Sabína","10-28":"Dobromila","10-29":"Klára","10-30":"Simona","10-31":"Aurélia","11-01":"Denis","11-02":"","11-03":"Hubert","11-04":"Karol","11-05":"Imrich","11-06":"Renáta","11-07":"René","11-08":"Bohumír","11-09":"Teodor","11-10":"Tibor","11-11":"Martin","11-12":"Svätopluk","11-13":"Stanislav","11-14":"Irma","11-15":"Leopold","11-16":"Agnesa","11-17":"Klaudia","11-18":"Eugen","11-19":"Alžbeta","11-20":"Félix","11-21":"Elvíra","11-22":"Cecília","11-23":"Klement","11-24":"Emília","11-25":"Katarína","11-26":"Kornel","11-27":"Milan","11-28":"Henrieta","11-29":"Vratko","11-30":"Ondrej","12-01":"Edmund","12-02":"Bibiana","12-03":"Oldrich","12-04":"Barbora","12-05":"Oto","12-06":"Mikuláš","12-07":"Ambróz","12-08":"Marína","12-09":"Izabela","12-10":"Radúz","12-11":"Hilda","12-12":"Otília","12-13":"Lucia","12-14":"Branislava","12-15":"Ivica","12-16":"Albína","12-17":"Kornélia","12-18":"Sláva","12-19":"Judita","12-20":"Dagmar","12-21":"Bohdan","12-22":"Adela","12-23":"Nadežda","12-24":"Adam","12-25":"","12-26":"Štefan","12-27":"Žaneta","12-28":"Ivana","12-29":"Milada","12-30":"Dávid","12-31":"Silvester"};
+
+const STORE_KEY='juraj_hq_v1';
+
+// ── Google Apps Script endpoint ──────────────────────────────────
+// Po nasadení skriptu vlož sem svoju Web App URL:
+let GAS_URL = localStorage.getItem('juraj_gas_url') || '';
+
+async function api(action, body={}) {
+  if (!GAS_URL) return null;
+  try {
+    // Use GET with encoded payload — works from file:// and avoids CORS preflight
+    const payload = encodeURIComponent(JSON.stringify({ action, ...body }));
+    const res = await fetch(GAS_URL + '?data=' + payload);
+    const j = await res.json();
+    if (!j.ok) { console.warn('API error:', j.error); return null; }
+    return j.data;
+  } catch(e) {
+    console.warn('API offline:', e.message);
+    return null;
+  }
+}
+
+async function apiGet(action, params={}) {
+  if (!GAS_URL) return null;
+  try {
+    const payload = encodeURIComponent(JSON.stringify({ action, ...params }));
+    const res = await fetch(GAS_URL + '?data=' + payload);
+    const j = await res.json();
+    if (!j.ok) { console.warn('API error:', j.error); return null; }
+    return j.data;
+  } catch(e) {
+    console.warn('API offline:', e.message);
+    return null;
+  }
+}
+
+// ── Sync flag — true = data loaded from Sheets ───────────────────
+let syncedFromSheets = false;
+let syncStatus = 'offline'; // 'offline' | 'syncing' | 'ok' | 'error'
+
+function setSyncStatus(s) {
+  syncStatus = s;
+  const el = document.getElementById('syncDot');
+  if (!el) return;
+  const map = { offline:'#666', syncing:'var(--accent)', ok:'var(--success)', error:'var(--danger)' };
+  el.style.background = map[s] || '#666';
+  el.title = { offline:'Offline – len lokálne', syncing:'Synchronizujem…', ok:'Synced s Google Sheets', error:'Chyba spojenia' }[s] || s;
+}
+
+let data={settings:{name:'Juraj',birthday:'',namedayName:'Juraj',dogTime:'05:15',city:'Partizánske',lat:48.6278,lon:18.3644},events:[],notes:[],friends:[],chatHistory:[],finance:{unicredit:null,hotovost:null,ucDate:null,cashDate:null,transactions:[],balanceHistory:[]}};
+
+function load(){
+  try{
+    const s=localStorage.getItem(STORE_KEY);
+    if(s){
+      const d=JSON.parse(s);
+      data.settings=Object.assign({name:'Juraj',birthday:'',namedayName:'Juraj',dogTime:'05:15',city:'Partizánske',lat:48.6278,lon:18.3644},d.settings||{});
+      data.events=d.events||[];
+      data.notes=d.notes||[];
+      data.friends=d.friends||[];
+      data.chatHistory=d.chatHistory||[];
+      data.finance=Object.assign({unicredit:null,hotovost:null,ucDate:null,cashDate:null,transactions:[],balanceHistory:[]},d.finance||{});
+
+      // ── DATA MIGRATIONS ──────────────────────────────
+      let changed=false;
+
+      // Fix: Vladimír (otec) birthday was incorrectly 1951-06-18, correct is 1951-02-18
+      const otec=data.friends.find(f=>f.name==='Vladimír'&&f.rel==='otec');
+      if(otec&&otec.birthday==='1951-06-18'){otec.birthday='1951-02-18';changed=true;}
+
+      // Fix: Marcela (švagriná) was 1972-08-07, correct is 1972-07-08
+      const marcela=data.friends.find(f=>f.name==='Marcela');
+      if(marcela&&marcela.birthday==='1972-08-07'){marcela.birthday='1972-07-08';changed=true;}
+
+      // Fix: Tomáš M. (švagor) was 1990-10-02, correct is 1991-02-10
+      const tomas=data.friends.find(f=>f.name==='Tomáš M.');
+      if(tomas&&(tomas.birthday==='1990-10-02'||tomas.birthday==='1991-10-02')){tomas.birthday='1991-02-10';changed=true;}
+
+      // Fix birthday events — remove stale auto-generated ones and let buildAllEvts regenerate
+      const badDates=['2026-06-18','2027-06-18','2026-08-07','2027-08-07'];
+      const beforeLen=data.events.length;
+      data.events=data.events.filter(e=>!(e.type==='birthday'&&e.title&&e.title.includes('Vladimír')&&badDates.includes(e.date)));
+      data.events=data.events.filter(e=>!(e.type==='birthday'&&e.title&&e.title.includes('Marcela')&&badDates.includes(e.date)));
+      if(data.events.length!==beforeLen) changed=true;
+
+      // Rebuild Vladimír birthday event with correct date
+      const hasVladBd=data.events.some(e=>e.type==='birthday'&&e.title&&e.title.includes('Vladimír (otec)'));
+      if(!hasVladBd){
+        const today=new Date();const yr=today.getFullYear();
+        const next=new Date(today)>new Date(yr+'-02-18')?yr+1:yr;
+        data.events.push({id:Date.now()+1,title:'Narodeniny: Vladimír (otec)',date:next+'-02-18',time:'',type:'birthday',yearlyName:'Vladimír',yearlyMonth:'02-18'});
+        changed=true;
+      }
+
+
+      // Add interests to existing friends (migration from older versions)
+      const interestsMap = {
+        'Nikolas':   'Pokemon, barber',
+        'Šarlota':   'Billy Eilish, Stranger Things',
+        'Pavol':     'Pokemon, Lego, Sonic, Pikachu',
+        'Vladimír':  'zbrane, kutilstvo',
+        'Peter':     'AC/DC, Iron Maiden, F1',
+        'Zuzana':    'hackovanie, knihy',
+        'Helena':    'vojačka, psy, turistika',
+      };
+      data.friends.forEach(f=>{
+        const key=f.name.split(' ')[0];
+        if(interestsMap[key]&&!f.interests){
+          f.interests=interestsMap[key];changed=true;
+        }
+      });
+
+
+      // Obhliadky nehnuteľností — apríl 2026
+      const obhliadky = [
+        {date:'2026-04-27', time:'16:00', title:'🏠 Obhliadka — Čerenany (bazos.sk)', note:'Tel: 0915750120 · reality.bazos.sk/inzerat/189659953'},
+        {date:'2026-04-27', time:'17:00', title:'🏠 Obhliadka — Kolačno 1395m²', note:'Tel: 0908224482 · reality.sk/domy/kolacne-pozemok-1395-m2'},
+        {date:'2026-04-28', time:'15:00', title:'🏠 Obhliadka — Prašice 1978m²', note:'Tel: 0915409737 · reality.sk/domy/prasice'},
+        {date:'2026-04-29', time:'16:00', title:'🏠 Obhliadka — Veľký Klíž', note:'Tel: 0907286706 · reality.sk/domy/velky-kliz'},
+        {date:'2026-04-29', time:'17:00', title:'🏠 Obhliadka — Veľké Krsťany 1475m²', note:'Tel: 0907286706 · reality.sk/domy/velke-krstany-1475-m2'},
+      ];
+      obhliadky.forEach((o,i)=>{
+        if(!data.events.find(e=>e.title===o.title)){
+          data.events.push({id:Date.now()+9000+i, title:o.title, date:o.date, time:o.time, type:'reminder', note:o.note});
+          changed=true;
+        }
+      });
+
+      // Pripomienky deň pred obhliadkou
+      const reminders = [
+        {date:'2026-04-26', time:'20:00', title:'🔔 Zajtra obhliadky: Čerenany 16:00, Kolačno 17:00'},
+        {date:'2026-04-27', time:'20:00', title:'🔔 Zajtra obhliadka: Prašice 15:00 · Tel: 0915409737'},
+        {date:'2026-04-28', time:'20:00', title:'🔔 Zajtra obhliadky: Veľký Klíž 16:00, Veľké Krsťany 17:00 · Tel: 0907286706'},
+      ];
+      reminders.forEach((r,i)=>{
+        if(!data.events.find(e=>e.title===r.title)){
+          data.events.push({id:Date.now()+9100+i, title:r.title, date:r.date, time:r.time, type:'reminder'});
+          changed=true;
+        }
+      });
+      if(changed) localStorage.setItem(STORE_KEY,JSON.stringify(data));
+    }
+  }catch(e){}
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e){}
+}
+// Push specific changes to Sheets (non-blocking)
+function pushSettings(){ api('saveSettings',{settings:data.settings}); }
+function pushFriends(){ api('saveFriends',{friends:data.friends}); }
+function pushChat(){ api('saveChat',{history:data.chatHistory.map(m=>({...m,ts:m.ts||new Date().toISOString()}))}); }
+function pushBalances(){
+  api('saveBalances',{unicredit:data.finance.unicredit,hotovost:data.finance.hotovost,ucDate:data.finance.ucDate,cashDate:data.finance.cashDate});
+}
+load();
+
+const SK_MONTHS=['január','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];
+const SK_DAYS=['nedeľa','pondelok','utorok','streda','štvrtok','piatok','sobota'];
+const CAL_MONTHS_SK=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
+
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  document.getElementById('dateStr').textContent=SK_DAYS[n.getDay()]+', '+n.getDate()+'. '+SK_MONTHS[n.getMonth()]+' '+n.getFullYear();
+  const key=String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+  const nd=NAMEDAYS[key];
+  document.getElementById('namedayBadge').textContent=nd?'Meniny: '+nd:'';
+}
+updateClock();setInterval(updateClock,10000);
+
+const W_ICONS={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'❄️',73:'❄️',75:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',95:'⛈️',96:'⛈️',99:'⛈️'};
+const W_DESC={0:'Jasno',1:'Prevažne jasno',2:'Čiastočne zamračené',3:'Zamračené',45:'Hmla',48:'Ľadová hmla',51:'Slabé mrholenie',53:'Mrholenie',55:'Silné mrholenie',61:'Slabý dážď',63:'Dážď',65:'Silný dážď',71:'Slabý sneh',73:'Sneh',75:'Silný sneh',80:'Prehánky',81:'Silné prehánky',82:'Búrkové prehánky',95:'Búrka',96:'Búrka s krupobitím',99:'Silná búrka'};
+
+async function loadWeather(){
+  const lat=data.settings.lat||48.6278,lon=data.settings.lon||18.3644;
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FBratislava&forecast_days=1`);
+    const j=await r.json();const c=j.current;
+    const temp=Math.round(c.temperature_2m),code=c.weathercode,wind=Math.round(c.windspeed_10m),hum=c.relativehumidity_2m;
+    const tmax=Math.round(j.daily.temperature_2m_max[0]),tmin=Math.round(j.daily.temperature_2m_min[0]);
+    const icon=W_ICONS[code]||'🌡️',desc=W_DESC[code]||'Neznáme';
+    document.getElementById('weatherContent').innerHTML=`<div class="weather-main"><div><div class="weather-temp">${temp}<sup>°C</sup></div><div class="weather-desc">${desc}</div></div><div class="weather-icon">${icon}</div></div><div class="weather-dog">🐕 ${dogAdvice(temp,code,wind)}</div><div class="weather-extra"><div class="weather-pill"><strong>${tmax}°/${tmin}°</strong>Max/min</div><div class="weather-pill"><strong>${wind} km/h</strong>Vietor</div><div class="weather-pill"><strong>${hum}%</strong>Vlhkosť</div></div>`;
+  }catch(e){document.getElementById('weatherContent').innerHTML='<div style="color:var(--muted);font-size:13px;">Počasie nedostupné</div>';}
+}
+
+function dogAdvice(temp,code,wind){
+  const t=data.settings.dogTime||'05:15';
+  const rain=[61,63,65,80,81,82,95,96,99];const snow=[71,73,75];
+  if(temp<=-10)return`O ${t}: Mráz ${temp}°C — krátka trasa, labky môžu mrzieť`;
+  if(temp<=0)return`O ${t}: Mráz — zimná bunda nutná`;
+  if(temp<=5)return`O ${t}: Chladno ${temp}°C — poriadne sa oblečte`;
+  if(rain.includes(code))return`O ${t}: Prší — dáždnik alebo pončo`;
+  if(snow.includes(code))return`O ${t}: Sneží — pozor na ľad`;
+  if(wind>40)return`O ${t}: Silný vietor ${wind} km/h — bude fúkať`;
+  if(temp>=25)return`O ${t}: Teplo ${temp}°C — voda pre psa, kratšia trasa`;
+  return`O ${t}: ${temp}°C, ${W_DESC[code]||'normálne'} — štandardná prechádzka 🐾`;
+}
+
+function toDateStr(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+function addEvent(){
+  const title=document.getElementById('evtTitle').value.trim();
+  const date=document.getElementById('evtDate').value;
+  const time=document.getElementById('evtTime').value;
+  const type=document.getElementById('evtType').value;
+  if(!title||!date){alert('Vyplň aspoň názov a dátum.');return;}
+  const newEvt={id:Date.now(),title,date,time,type};
+  data.events.push(newEvt);
+  save();
+  api('addEvent',{event:newEvt});
+  document.getElementById('evtTitle').value='';
+  document.getElementById('evtDate').value='';
+  document.getElementById('evtTime').value='';
+  renderEvents();renderAllEvents();renderCalendar();
+}
+
+function deleteEvent(id){data.events=data.events.filter(e=>e.id!==id);save();api('deleteEvent',{id});renderEvents();renderAllEvents();renderCalendar();}
+function clearEvents(){if(!confirm('Vymazať všetky udalosti?'))return;data.events=[];save();renderEvents();renderAllEvents();renderCalendar();}
+
+function buildAllEvts(){
+  const now=new Date();
+  const all=[...data.events];
+
+  // Namedays for friends (next 30 days)
+  data.friends.forEach(f=>{
+    const firstName=f.name.split(' ')[0];
+    for(let i=0;i<=30;i++){
+      const d=new Date(now);d.setDate(d.getDate()+i);
+      const key=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const nd=NAMEDAYS[key];
+      if(nd&&nd.split(',').some(n=>n.trim().toLowerCase()===firstName.toLowerCase())){
+        all.push({id:'nd-'+f.name+key,title:'Meniny: '+f.name+(f.rel?' ('+f.rel+')':''),date:toDateStr(d),type:'nameday',auto:true});
+      }
+    }
+  });
+
+  // Own birthday
+  if(data.settings.birthday){
+    const bd=cleanBirthday(data.settings.birthday).slice(5);
+    for(let i=0;i<=365;i++){
+      const d=new Date(now);d.setDate(d.getDate()+i);
+      const dm=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      if(dm===bd){all.push({id:'bd-self',title:'Tvoje narodeniny 🎂',date:toDateStr(d),type:'birthday',auto:true});break;}
+    }
+  }
+
+  // Own nameday
+  if(data.settings.namedayName){
+    for(let i=0;i<=365;i++){
+      const d=new Date(now);d.setDate(d.getDate()+i);
+      const key=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const nd=NAMEDAYS[key];
+      if(nd&&nd.split(',').some(n=>n.trim().toLowerCase()===data.settings.namedayName.toLowerCase())){
+        all.push({id:'nd-self-'+key,title:'Tvoje meniny! 🎉',date:toDateStr(d),type:'nameday',auto:true});break;
+      }
+    }
+  }
+
+  // 🏋️ Gym tréning dnes — ak je pondelok/utorok/štvrtok/piatok
+  (()=>{
+    const todayDow=now.getDay();
+    const gymToday=GYM_SCHEDULE.find(g=>g.dow===todayDow);
+    if(gymToday){
+      const checked=gymGetChecked();
+      const ds=toDateStr(now);
+      const label=checked.includes(gymToday.dow)?'✅ Gym splnený: '+gymToday.detail:'🏋️ Gym dnes: '+gymToday.emoji+' '+gymToday.detail+' ('+gymToday.duration+')';
+      all.push({id:'gym-today-'+ds,title:label,date:ds,type:'reminder',auto:true});
+    }
+  })();
+
+  // 💐 Každý 4. v mesiaci — pripomienka: kvetina pre Janku (výročie 1. rande je 5-ty)
+  for(let i=0;i<=365;i++){
+    const d=new Date(now);d.setDate(d.getDate()+i);
+    if(d.getDate()===4){
+      const ds=toDateStr(d);
+      if(!all.find(e=>e.id==='kvety-'+ds)){
+        all.push({id:'kvety-'+ds,title:'💐 Kvetina pre Janku — zajtra je výročie 1. rande!',date:ds,type:'reminder',auto:true});
+      }
+      i+=27;
+    }
+  }
+
+  return all.sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function renderEvents(){
+  const now=new Date();const todayStr=toDateStr(now);
+  const all=buildAllEvts();
+  const todayEvts=all.filter(e=>e.date===todayStr);
+  const upEvts=all.filter(e=>e.date>todayStr).slice(0,8);
+  const te=document.getElementById('eventsToday');
+  const ue=document.getElementById('eventsUpcoming');
+  te.innerHTML=todayEvts.length?todayEvts.map(e=>evtHTML(e,'today')).join(''):'<div class="empty-state">Žiadne udalosti dnes</div>';
+  ue.innerHTML=upEvts.length?upEvts.map(e=>evtHTML(e,'upcoming')).join(''):'<div class="empty-state">Najbližšie dni sú voľné</div>';
+}
+
+function evtHTML(e,mode){
+  const dc=e.type==='birthday'?'birthday':e.type==='nameday'?'nameday':e.type==='reminder'?'reminder':'event';
+  let wl='';
+  if(mode==='today'){wl=`<span class="event-when today">${e.time||'dnes'}</span>`;}
+  else{const diff=Math.round((new Date(e.date)-new Date(toDateStr(new Date())))/86400000);wl=`<span class="event-when ${diff===1?'tomorrow':''}">${diff===1?'zajtra':diff+'d'}</span>`;}
+  return`<div class="event-item"><div class="event-dot ${dc}"></div><div class="event-content"><div class="event-title">${e.title}</div>${e.time?`<div class="event-sub">${e.time}</div>`:''} ${e.note?`<div class="event-sub" style="color:var(--accent2);">${e.note}</div>`:''}</div>${wl}</div>`;
+}
+
+function renderAllEvents(){
+  const el=document.getElementById('allEvents');
+  const sorted=[...data.events].sort((a,b)=>a.date.localeCompare(b.date));
+  if(!sorted.length){el.innerHTML='<div class="empty-state">Zatiaľ žiadne udalosti</div>';return;}
+  const dotBg=t=>t==='birthday'?'#c87070':t==='nameday'?'var(--accent)':t==='reminder'?'var(--accent2)':'#70c8a0';
+  el.innerHTML=sorted.map(e=>`<div class="card" style="margin-bottom:6px;padding:10px 14px;display:flex;align-items:center;gap:10px;"><div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${dotBg(e.type)}"></div><div style="flex:1"><div style="font-size:13px;">${e.title}</div><div style="font-size:11px;color:var(--muted);">${e.date}${e.time?' · '+e.time:''}</div></div><button class="btn-sm" onclick="deleteEvent(${e.id})" style="color:var(--danger)">×</button></div>`).join('');
+}
+
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+function renderCalendar(){
+  document.getElementById('calMonthLabel').textContent=CAL_MONTHS_SK[calMonth]+' '+calYear;
+  const grid=document.getElementById('calGrid');
+  const todayStr=toDateStr(new Date());
+  let html=['Po','Ut','St','Št','Pi','So','Ne'].map(d=>`<div class="cal-head">${d}</div>`).join('');
+  const first=new Date(calYear,calMonth,1);
+  let sdow=first.getDay();sdow=sdow===0?6:sdow-1;
+  const dim=new Date(calYear,calMonth+1,0).getDate();
+  const prev=new Date(calYear,calMonth,0).getDate();
+  for(let i=0;i<sdow;i++)html+=`<div class="cal-day other-month">${prev-sdow+i+1}</div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isT=ds===todayStr;const hasE=data.events.some(e=>e.date===ds);
+    html+=`<div class="cal-day ${isT?'today':''} ${hasE?'has-event':''}" onclick="calDayClick('${ds}')">${d}</div>`;
+  }
+  const rem=(sdow+dim)%7===0?0:7-(sdow+dim)%7;
+  for(let i=1;i<=rem;i++)html+=`<div class="cal-day other-month">${i}</div>`;
+  grid.innerHTML=html;
+}
+function calNav(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function calDayClick(ds){document.getElementById('evtDate').value=ds;document.getElementById('evtTitle').focus();}
+
+function addNote(){
+  const text=document.getElementById('noteText').value.trim();if(!text)return;
+  const tag=document.getElementById('noteTag').value;
+  const newNote={id:Date.now(),text,tag,ts:new Date().toISOString()};
+  data.notes.unshift(newNote);
+  save();
+  api('addNote',{note:newNote});document.getElementById('noteText').value='';renderNotes();
+}
+function deleteNote(id){data.notes=data.notes.filter(n=>n.id!==id);save();api('deleteNote',{id});renderNotes();}
+const TAG_L={general:'Všeobecné',idea:'Nápad',decision:'Rozhodnutie',log:'Log'};
+const TAG_C={general:'',idea:'gold',decision:'green',log:'blue'};
+function renderNotes(){
+  const el=document.getElementById('notesList');
+  if(!data.notes.length){el.innerHTML='<div class="empty-state">Zatiaľ žiadne poznámky</div>';return;}
+  el.innerHTML=data.notes.map(n=>{
+    const d=new Date(n.ts);
+    const ds=`${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return`<div class="note-item"><button class="note-del" onclick="deleteNote(${n.id})">×</button><div>${n.text.replace(/\n/g,'<br>')}</div><div class="note-meta"><span class="badge ${TAG_C[n.tag]||''}">${TAG_L[n.tag]||n.tag}</span> ${ds}</div></div>`;
+  }).join('');
+}
+
+function addFriend(){
+  const name=document.getElementById('friendName').value.trim();if(!name)return;
+  if(!data.friends.find(f=>f.name.toLowerCase()===name.toLowerCase())){
+    let nk=null;
+    for(const[k,v]of Object.entries(NAMEDAYS)){if(v&&v.split(',').some(n=>n.trim().toLowerCase()===name.toLowerCase())){nk=k;break;}}
+    data.friends.push({name,namedayKey:nk});
+  }
+  save();document.getElementById('friendName').value='';renderFriends();renderEvents();
+}
+function removeFriend(name){data.friends=data.friends.filter(f=>f.name!==name);save();renderFriends();renderEvents();}
+function parseBd(bd){
+  if(!bd) return '';
+  const s=String(bd);
+  const m=s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return m[3]+'.'+m[2]+'.'+m[1];
+  const d=new Date(s);
+  if(!isNaN(d.getTime())) return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();
+  return s.slice(0,10);
+}
+function cleanBd(bd){
+  if(!bd) return '';
+  const s=String(bd);
+  const m=s.match(/(\d{4}-\d{2}-\d{2})/);
+  if(m) return m[1];
+  const d=new Date(s);
+  if(!isNaN(d.getTime())) return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return '';
+}
+function renderFriends(){
+  const el=document.getElementById('friendsList');
+  if(!data.friends.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:4px 0">Zatiaľ nikto.</div>';return;}
+  el.innerHTML=data.friends.map((f,i)=>{
+    const rel=f.rel?`<span style="color:var(--accent2);font-size:11px;margin-left:5px;">${f.rel}</span>`:'';
+    const bdClean=cleanBd(f.birthday);
+    const bdDisplay=bdClean?` · nar. ${parseBd(bdClean)}`:'';
+    const nd=f.namedayKey?` · meniny ${f.namedayKey}`:'';
+    const safeName=f.name.replace(/'/g,"\\'");
+    return`<div style="border-bottom:1px solid var(--border);padding:8px 0;" id="friend-row-${i}">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <span style="font-size:13px;">${f.name}</span>${rel}
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${bdDisplay}${nd}</div>
+          ${f.interests?`<div style="font-size:10px;color:var(--accent);margin-top:2px;">🎁 ${f.interests}</div>`:''}
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button class="btn-sm" onclick="editFriend(${i})" style="color:var(--accent2);">✎</button>
+          <button class="btn-sm" onclick="removeFriend('${safeName}')">×</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function editFriend(i){
+  const f=data.friends[i];
+  const bdClean=cleanBd(f.birthday);
+  const row=document.getElementById('friend-row-'+i);
+  if(!row) return;
+  row.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px;padding:4px 0;">
+    <div style="display:flex;gap:6px;">
+      <input id="ef-name" class="quick-input" value="${f.name}" placeholder="Meno" style="flex:1;padding:6px 10px;font-size:13px;">
+      <input id="ef-rel" class="quick-input" value="${f.rel||''}" placeholder="Vzťah" style="flex:1;padding:6px 10px;font-size:13px;">
+    </div>
+    <div style="display:flex;gap:6px;">
+      <input type="date" id="ef-bd" class="quick-input" value="${bdClean}" style="flex:1;padding:6px 10px;font-size:13px;">
+      <input id="ef-int" class="quick-input" value="${f.interests||''}" placeholder="Záujmy" style="flex:1;padding:6px 10px;font-size:13px;">
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn-add" onclick="saveFriendEdit(${i})" style="flex:1;padding:7px;">Uložiť</button>
+      <button class="btn-sm" onclick="renderFriends()" style="flex:1;">Zrušiť</button>
+    </div>
+  </div>`;
+}
+function saveFriendEdit(i){
+  const name=document.getElementById('ef-name').value.trim();
+  const rel=document.getElementById('ef-rel').value.trim();
+  const bd=document.getElementById('ef-bd').value;
+  const interests=document.getElementById('ef-int').value.trim();
+  if(!name) return;
+  const firstName=name.split(' ')[0];
+  let nk=null;
+  for(const[k,v] of Object.entries(NAMEDAYS)){
+    if(v&&v.split(',').some(n=>n.trim().toLowerCase()===firstName.toLowerCase())){nk=k;break;}
+  }
+  data.friends[i]={name,rel,birthday:bd,namedayKey:nk,interests};
+  save();
+  api('saveFriends',{friends:data.friends});
+  renderFriends();
+  renderEvents();
+}
+
+
+function loadSettingsUI(){
+  const s=data.settings;
+  const gasInput=document.getElementById('cfg-gas-url');
+  if(gasInput) gasInput.value=GAS_URL||'';
+  document.getElementById('cfg-name').value=s.name||'';
+  document.getElementById('cfg-birthday').value=s.birthday||'';
+  document.getElementById('cfg-nameday-name').value=s.namedayName||'';
+  document.getElementById('cfg-dog-time').value=s.dogTime||'05:15';
+  document.getElementById('cfg-city').value=s.city||'Partizánske';
+}
+function saveSettings(){
+  data.settings.name=document.getElementById('cfg-name').value.trim()||'Juraj';
+  data.settings.birthday=document.getElementById('cfg-birthday').value;
+  data.settings.namedayName=document.getElementById('cfg-nameday-name').value.trim();
+  data.settings.dogTime=document.getElementById('cfg-dog-time').value;
+  data.settings.city=document.getElementById('cfg-city').value.trim()||'Partizánske';
+  save();pushSettings();alert('Nastavenia uložené ✓');renderEvents();loadWeather();
+}
+
+function buildSystemPrompt(){
+  const now=new Date();
+  const key=String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const nd=NAMEDAYS[key]||'(žiadne)';
+  const upEvts=data.events.filter(e=>e.date>=toDateStr(now)).slice(0,5).map(e=>e.date+': '+e.title).join(', ')||'žiadne';
+  const notes=data.notes.slice(0,3).map(n=>n.text.slice(0,60)).join(' | ')||'žiadne';
+    // Build gift context from friends interests
+  const giftCtx=data.friends.filter(f=>f.interests).map(f=>`${f.name} (${f.rel}): ${f.interests}`).join(', ');
+  return`Si osobný AI asistent Juraja Kostelného. Komunikuj po slovensky, priamo a priateľsky. Dnešný dátum: ${now.toLocaleDateString('sk-SK')}. Meniny dnes: ${nd}. Najbližšie udalosti: ${upEvts}. Posledné poznámky: ${notes}. Uč sa z jeho vstupov a prispôsobuj sa jeho štýlu. Záujmy rodiny/priateľov pre darčeky: ${giftCtx}.`;
+}
+
+async function sendChat(){
+  const input=document.getElementById('chatInput');const msg=input.value.trim();if(!msg)return;
+  input.value='';addChatMsg(msg,'user');
+  data.chatHistory.push({role:'user',content:msg});
+  if(data.chatHistory.length>20)data.chatHistory=data.chatHistory.slice(-20);
+  const t=document.createElement('div');t.className='msg ai typing';t.textContent='Premýšľam…';
+  document.getElementById('chatMessages').appendChild(t);scrollChat();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:buildSystemPrompt(),messages:data.chatHistory})});
+    const j=await res.json();t.remove();
+    const reply=j.content?.[0]?.text||'Nastala chyba.';
+    data.chatHistory.push({role:'assistant',content:reply});save();addChatMsg(reply,'ai');
+  }catch(e){t.remove();addChatMsg('Chyba spojenia.','ai');}
+}
+function addChatMsg(text,role){
+  const el=document.getElementById('chatMessages');const div=document.createElement('div');div.className='msg '+role;
+  if(role==='ai')div.innerHTML='<div class="msg-label">JURAJ HQ · AI</div>'+text.replace(/\n/g,'<br>');
+  else div.textContent=text;
+  el.appendChild(div);scrollChat();
+}
+function scrollChat(){const el=document.getElementById('chatMessages');el.scrollTop=el.scrollHeight;}
+function restoreChat(){
+  if(data.chatHistory.length){
+    document.getElementById('chatMessages').innerHTML='';
+    data.chatHistory.forEach(m=>addChatMsg(m.content,m.role));
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  GYM TRACKER
+// ═══════════════════════════════════════════════════════
+const GYM_SCHEDULE = [
+  {dow:1, name:'Pondelok', emoji:'🦵', detail:'Nohy', duration:'1 hod'},
+  {dow:2, name:'Utorok',   emoji:'🏃', detail:'Kardio', duration:'30 min'},
+  {dow:4, name:'Štvrtok',  emoji:'💪', detail:'Chrbát & Prsia', duration:'1 hod'},
+  {dow:5, name:'Piatok',   emoji:'🏃', detail:'Kardio', duration:'30 min'},
+];
+
+function gymWeekKey(){
+  const now=new Date();
+  // ISO week — Monday-based
+  const d=new Date(now);
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate()+4-(d.getDay()||7));
+  const yr=d.getFullYear();
+  const wk=Math.ceil((((d-new Date(yr,0,1))/86400000)+1)/7);
+  return yr+'-W'+String(wk).padStart(2,'0');
+}
+
+function gymMonthKey(){
+  const n=new Date();
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');
+}
+
+function gymGetChecked(){
+  const key='gym-'+gymWeekKey();
+  try{return JSON.parse(localStorage.getItem(key)||'[]');}catch(e){return [];}
+}
+function gymSetChecked(arr){
+  localStorage.setItem('gym-'+gymWeekKey(),JSON.stringify(arr));
+}
+function gymGetMonthLog(){
+  const key='gymlog-'+gymMonthKey();
+  try{return JSON.parse(localStorage.getItem(key)||'{}');}catch(e){return {};}
+}
+function gymLogSession(dowKey){
+  const log=gymGetMonthLog();
+  log[dowKey]=(log[dowKey]||0)+1;
+  localStorage.setItem('gymlog-'+gymMonthKey(),JSON.stringify(log));
+}
+
+function gymToggle(dow){
+  const checked=gymGetChecked();
+  const idx=checked.indexOf(dow);
+  if(idx===-1){
+    checked.push(dow);
+    gymLogSession(gymMonthKey()+'-'+dow);
+  } else {
+    checked.splice(idx,1);
+  }
+  gymSetChecked(checked);
+  renderGym();
+}
+
+function gymReset(){
+  if(!confirm('Resetovať odkliknuté tréningy tohto týždňa?')) return;
+  localStorage.removeItem('gym-'+gymWeekKey());
+  renderGym();
+}
+
+function renderGym(){
+  const checked=gymGetChecked();
+  const today=new Date().getDay(); // 0=Sun,1=Mon...
+
+  // Progress bar
+  const prog=document.getElementById('gymProgress');
+  prog.innerHTML=GYM_SCHEDULE.map(g=>`<div class="gym-prog-dot ${checked.includes(g.dow)?'done':''}"></div>`).join('');
+
+  // Streak / summary
+  const done=checked.length;
+  const total=GYM_SCHEDULE.length;
+  const streakEl=document.getElementById('gymStreak');
+  if(done===total) streakEl.innerHTML='🏆 Perfektný týždeň! Všetky 4 tréningy splnené.';
+  else if(done===0) streakEl.innerHTML='Tento týždeň ešte žiadny tréning. Makaj! 💪';
+  else streakEl.innerHTML=`Tento týždeň: ${done} / ${total} tréningov splnených`;
+
+  // Days
+  const el=document.getElementById('gymDays');
+  const now=new Date();
+  const todayDow=now.getDay();
+
+  el.innerHTML=GYM_SCHEDULE.map(g=>{
+    const isDone=checked.includes(g.dow);
+    const isToday=todayDow===g.dow;
+    const isFuture=g.dow>todayDow;
+    let statusLabel='';
+    if(isToday&&!isDone) statusLabel='<span style="font-size:10px;background:rgba(200,169,110,.15);color:var(--accent);border:1px solid rgba(200,169,110,.3);border-radius:4px;padding:2px 6px;margin-left:6px;">dnes</span>';
+    if(isDone) statusLabel='<span style="font-size:10px;background:rgba(112,200,112,.12);color:var(--success);border:1px solid rgba(112,200,112,.3);border-radius:4px;padding:2px 6px;margin-left:6px;">splnené ✓</span>';
+
+    return`<div class="gym-day ${isDone?'done':''}" style="${isToday&&!isDone?'border-color:rgba(200,169,110,.3);':''}" onclick="gymToggle(${g.dow})">
+      <div class="gym-day-header">
+        <div class="gym-check ${isDone?'checked':''}">
+          <svg viewBox="0 0 14 14"><polyline points="2,7 5.5,10.5 12,3.5"/></svg>
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;">
+            <span class="gym-day-name">${g.emoji} ${g.name} — ${g.detail}</span>
+            ${statusLabel}
+          </div>
+          <div class="gym-detail">Fitcentrum 365 Topoľčany · ${g.duration}</div>
+        </div>
+        <span class="gym-duration">${g.duration}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Month stats
+  const log=gymGetMonthLog();
+  const monthTotal=Object.values(log).reduce((a,b)=>a+b,0);
+  const monthLabel=new Date().toLocaleDateString('sk-SK',{month:'long',year:'numeric'});
+  document.getElementById('gymStats').innerHTML=
+    `<span style="color:var(--text)">${monthTotal}</span> tréningov v ${monthLabel}` +
+    (monthTotal>0?` · celkovo cca <span style="color:var(--text)">${Math.round(monthTotal*45)} min</span>`:'');
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  FINANCE MODULE
+// ═══════════════════════════════════════════════════════
+const FIN_CATS = [
+  {id:'jedlo',     icon:'🛒', label:'Nákup'},
+  {id:'eshop',     icon:'📦', label:'E-shop'},
+  {id:'auto',      icon:'🚗', label:'Auto'},
+  {id:'gastro',    icon:'🍽️', label:'Gastro'},
+  {id:'zdravie',   icon:'💊', label:'Zdravie'},
+  {id:'oblecenie', icon:'👕', label:'Oblečenie'},
+  {id:'zabava',    icon:'🎮', label:'Zábava'},
+  {id:'sluzby',    icon:'🔧', label:'Služby'},
+  {id:'sport',     icon:'💪', label:'Šport'},
+  {id:'rodina',    icon:'👨‍👩‍👧', label:'Rodina'},
+  {id:'cestovanie',icon:'✈️', label:'Cestovanie'},
+  {id:'ine',       icon:'💶', label:'Iné'},
+];
+
+let finTxType = 'vydavok';
+let finSelCat = 'ine';
+let finViewMonth = new Date().getMonth();
+let finViewYear  = new Date().getFullYear();
+
+function finSubTab(name, el){
+  ['prehled','transakcie','pridat','import'].forEach(t=>{
+    document.getElementById('fin-'+t).style.display = t===name?'block':'none';
+  });
+  document.querySelectorAll('.fin-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(name==='transakcie') renderFinTx();
+  if(name==='prehled') renderFinPrehled();
+  if(name==='pridat') renderFinCats();
+}
+
+function finSetType(type){
+  finTxType = type;
+  const vBtn = document.getElementById('fin-type-vydavok');
+  const pBtn = document.getElementById('fin-type-prijem');
+  if(type==='vydavok'){
+    vBtn.className='btn-add'; vBtn.style.background='var(--danger)'; vBtn.style.flex='1';
+    pBtn.className='btn-sm'; pBtn.style.flex='1';
+  } else {
+    pBtn.className='btn-add'; pBtn.style.background='var(--success)'; pBtn.style.flex='1';
+    vBtn.className='btn-sm'; vBtn.style.flex='1';
+  }
+}
+
+function renderFinCats(){
+  const el = document.getElementById('fin-cats');
+  el.innerHTML = FIN_CATS.map(cat=>
+    `<div class="fin-cat-btn ${finSelCat===cat.id?'active':''}" onclick="finSelCat='${cat.id}';renderFinCats()">
+      <span class="cat-icon">${cat.icon}</span>${cat.label}
+    </div>`
+  ).join('');
+}
+
+function finAddTx(){
+  const amount = parseFloat(document.getElementById('fin-amount').value);
+  const desc   = document.getElementById('fin-desc').value.trim() || 'Bez popisu';
+  const acc    = document.getElementById('fin-account-sel').value;
+  const date   = document.getElementById('fin-date').value || toDateStr(new Date());
+  if(!amount || amount<=0){ alert('Zadaj sumu.'); return; }
+
+  const cat = FIN_CATS.find(c=>c.id===finSelCat) || FIN_CATS[FIN_CATS.length-1];
+  const sign = finTxType==='vydavok' ? -1 : 1;
+
+  data.finance.transactions.push({
+    id: Date.now(),
+    date, desc, cat: finSelCat,
+    amount: Math.abs(amount) * sign,
+    acc, type: finTxType
+  });
+
+  // Update running balance
+  if(acc==='unicredit' && data.finance.unicredit !== null){
+    data.finance.unicredit = Math.round((data.finance.unicredit + Math.abs(amount)*sign)*100)/100;
+    data.finance.ucDate = toDateStr(new Date());
+  }
+  if(acc==='hotovost' && data.finance.hotovost !== null){
+    data.finance.hotovost = Math.round((data.finance.hotovost + Math.abs(amount)*sign)*100)/100;
+    data.finance.cashDate = toDateStr(new Date());
+  }
+
+  save();
+  api('addTx',{tx:data.finance.transactions[data.finance.transactions.length-1]});
+  document.getElementById('fin-amount').value='';
+  document.getElementById('fin-desc').value='';
+  finRecordBalanceSnapshot();
+  renderFinPrehled();
+  // Switch to prehled
+  document.querySelector('.fin-tab').click();
+}
+
+function finEditAccount(type){
+  const cur = type==='unicredit' ? data.finance.unicredit : data.finance.hotovost;
+  const label = type==='unicredit' ? 'UniCredit zostatok' : 'Hotovosť v trezore';
+  const val = prompt(`${label} (€):`, cur !== null ? cur : '');
+  if(val === null) return;
+  const num = parseFloat(val.replace(',','.'));
+  if(isNaN(num)){ alert('Neplatná suma.'); return; }
+  if(type==='unicredit'){ data.finance.unicredit=num; data.finance.ucDate=toDateStr(new Date()); }
+  else                  { data.finance.hotovost=num;  data.finance.cashDate=toDateStr(new Date()); }
+  save(); finRecordBalanceSnapshot(); renderFinPrehled();
+}
+
+function finSaveBalances(){
+  const uc   = document.getElementById('fin-uc-manual').value;
+  const cash = document.getElementById('fin-cash-manual').value;
+  if(uc)  { data.finance.unicredit = parseFloat(uc.replace(',','.')); data.finance.ucDate = toDateStr(new Date()); }
+  if(cash){ data.finance.hotovost  = parseFloat(cash.replace(',','.')); data.finance.cashDate = toDateStr(new Date()); }
+  save(); pushBalances(); finRecordBalanceSnapshot(); renderFinPrehled();
+  document.getElementById('fin-uc-manual').value='';
+  document.getElementById('fin-cash-manual').value='';
+  alert('Zostatky uložené ✓');
+}
+
+function finRecordBalanceSnapshot(){
+  const total = (data.finance.unicredit||0) + (data.finance.hotovost||0);
+  const ds = toDateStr(new Date());
+  const hist = data.finance.balanceHistory;
+  // Replace today's record or append
+  const idx = hist.findIndex(h=>h.date===ds);
+  if(idx>=0) hist[idx].total = total;
+  else hist.push({date:ds, total, uc:data.finance.unicredit||0, cash:data.finance.hotovost||0});
+  // Keep last 24 months of daily records → compress to monthly after 60 days
+  if(hist.length > 730) hist.splice(0, hist.length-730);
+  save();
+}
+
+function fmt(n){ return (n===null||n===undefined) ? '—' : n.toLocaleString('sk-SK',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function renderFinPrehled(){
+  const uc   = data.finance.unicredit;
+  const cash = data.finance.hotovost;
+  const ucDate   = data.finance.ucDate;
+  const cashDate = data.finance.cashDate;
+
+  document.getElementById('fin-uc-amount').textContent   = (uc!==null   ? fmt(uc)   : '—') + ' €';
+  document.getElementById('fin-cash-amount').textContent = (cash!==null ? fmt(cash) : '—') + ' €';
+  document.getElementById('fin-uc-date').textContent   = ucDate   ? 'Aktualizované: '+ucDate   : 'Klikni pre aktualizáciu';
+  document.getElementById('fin-cash-date').textContent = cashDate ? 'Aktualizované: '+cashDate : 'Klikni pre aktualizáciu';
+
+  const total = (uc||0) + (cash||0);
+  document.getElementById('fin-total').textContent = (uc!==null||cash!==null) ? fmt(total)+' €' : '— €';
+
+  // Trend vs last month
+  const hist = data.finance.balanceHistory;
+  const trendEl = document.getElementById('fin-trend');
+  if(hist.length >= 2){
+    const prev = hist[hist.length-2].total;
+    const diff = total - prev;
+    const sign = diff>=0?'+':'';
+    trendEl.className = 'fin-trend '+(diff>=0?'up':'down');
+    trendEl.textContent = sign+fmt(diff)+' € oproti predchádzajúcemu záznamu';
+  } else { trendEl.textContent=''; }
+
+  // Month summary
+  finRenderMonthSummary();
+
+  // Balance history bars
+  const histEl = document.getElementById('fin-history');
+  if(hist.length === 0){ histEl.innerHTML='<div class="empty-state">Zatiaľ žiadna história. Zadaj zostatok.</div>'; }
+  else {
+    const max = Math.max(...hist.map(h=>h.total), 1);
+    const recent = hist.slice(-12);
+    histEl.innerHTML = recent.map(h=>{
+      const pct = Math.round((h.total/max)*100);
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+        <span style="font-size:10px;color:var(--muted);width:72px;flex-shrink:0;">${h.date.slice(5)}</span>
+        <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:var(--accent);border-radius:3px;transition:width .4s"></div>
+        </div>
+        <span style="font-size:11px;color:var(--text);width:80px;text-align:right;flex-shrink:0;">${fmt(h.total)} €</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Month label
+  document.getElementById('finMonthLabel').textContent =
+    CAL_MONTHS_SK[finViewMonth]+' '+finViewYear;
+}
+
+function finRenderMonthSummary(){
+  const txs = data.finance.transactions.filter(t=>{
+    const d = new Date(t.date);
+    return d.getMonth()===finViewMonth && d.getFullYear()===finViewYear;
+  });
+
+  let vydavky=0, prijmy=0;
+  const byCat={};
+  txs.forEach(t=>{
+    if(t.amount<0){ vydavky+=Math.abs(t.amount); const k=t.cat||'ine'; byCat[k]=(byCat[k]||0)+Math.abs(t.amount); }
+    else prijmy+=t.amount;
+  });
+
+  const catSorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const catHTML = catSorted.map(([id,sum])=>{
+    const cat = FIN_CATS.find(c=>c.id===id)||{icon:'💶',label:id};
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px;">
+      <span>${cat.icon} ${cat.label}</span>
+      <span style="color:var(--danger)">−${fmt(sum)} €</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('fin-month-summary').innerHTML =
+    `<div style="display:flex;gap:0;margin-bottom:10px;">
+      <div style="flex:1;padding:8px 0;border-right:1px solid var(--border);">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Výdavky</div>
+        <div style="font-size:20px;font-family:'DM Serif Display',serif;color:var(--danger);margin-top:2px">${fmt(vydavky)} €</div>
+      </div>
+      <div style="flex:1;padding:8px 0 8px 14px;">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Príjmy</div>
+        <div style="font-size:20px;font-family:'DM Serif Display',serif;color:var(--success);margin-top:2px">+${fmt(prijmy)} €</div>
+      </div>
+    </div>
+    ${catHTML||'<div class="empty-state" style="padding:8px 0">Tento mesiac zatiaľ žiadne transakcie</div>'}`;
+}
+
+function finMonthNav(dir){
+  finViewMonth += dir;
+  if(finViewMonth>11){finViewMonth=0;finViewYear++;}
+  if(finViewMonth<0){finViewMonth=11;finViewYear--;}
+  document.getElementById('finMonthLabel').textContent = CAL_MONTHS_SK[finViewMonth]+' '+finViewYear;
+  finRenderMonthSummary();
+}
+
+function renderFinTx(){
+  const el = document.getElementById('fin-tx-list');
+  const txs = [...data.finance.transactions]
+    .filter(t=>{ const d=new Date(t.date); return d.getMonth()===finViewMonth&&d.getFullYear()===finViewYear; })
+    .sort((a,b)=>b.date.localeCompare(a.date));
+
+  document.getElementById('fin-tx-month-title').textContent =
+    'Transakcie · '+CAL_MONTHS_SK[finViewMonth]+' '+finViewYear;
+
+  if(!txs.length){ el.innerHTML='<div class="empty-state">Žiadne transakcie tento mesiac</div>'; return; }
+
+  el.innerHTML = txs.map(t=>{
+    const cat = FIN_CATS.find(c=>c.id===t.cat)||{icon:'💶',label:'Iné'};
+    const col  = t.amount<0?'var(--danger)':'var(--success)';
+    const sign = t.amount<0?'−':'+';
+    return `<div class="fin-tx-item">
+      <div class="fin-tx-icon" style="background:${t.amount<0?'rgba(224,112,112,.1)':'rgba(112,200,112,.1)'}">
+        ${cat.icon}
+      </div>
+      <div class="fin-tx-info">
+        <div class="fin-tx-name">${t.desc}</div>
+        <div class="fin-tx-meta">${t.date} · ${cat.label} · ${t.acc==='hotovost'?'Hotovosť':'UniCredit'}</div>
+      </div>
+      <span class="fin-tx-amount ${t.amount<0?'vydavok':'prijem'}">${sign}${fmt(Math.abs(t.amount))} €</span>
+      <button class="fin-tx-del" onclick="finDelTx(${t.id})">×</button>
+    </div>`;
+  }).join('');
+}
+
+function finDelTx(id){
+  const tx = data.finance.transactions.find(t=>t.id===id);
+  if(!tx) return;
+  if(!confirm(`Vymazať: ${tx.desc} (${fmt(Math.abs(tx.amount))} €)?`)) return;
+  // Reverse balance effect
+  if(tx.acc==='unicredit' && data.finance.unicredit!==null)
+    data.finance.unicredit = Math.round((data.finance.unicredit - tx.amount)*100)/100;
+  if(tx.acc==='hotovost' && data.finance.hotovost!==null)
+    data.finance.hotovost = Math.round((data.finance.hotovost - tx.amount)*100)/100;
+  data.finance.transactions = data.finance.transactions.filter(t=>t.id!==id);
+  save(); api('deleteTx',{id}); finRecordBalanceSnapshot(); renderFinTx(); renderFinPrehled();
+}
+
+
+function finParseEmail(){
+  const text = document.getElementById('fin-email-input').value;
+  const resultEl = document.getElementById('fin-email-result');
+
+  if(!text.trim()){ alert('Vlož text emailu.'); return; }
+
+  // Extract disponibilny zostatok — handles both . and , decimal
+  // Matches: "Disponibilný zostatok: 109.47 EUR" or "Disponibilný zostatok: 1 234,56 EUR"
+  const patterns = [
+    /Disponibiln[ýy]\s+zostatok\s*:\s*([\d\s]+[.,]\d{2})\s*EUR/i,
+    /Disponibiln[ýy]\s+zostatok\s*:\s*([\d]+)\s*EUR/i,
+    /Účtovný zostatok\s*:\s*([\d\s]+[.,]\d{2})\s*EUR/i,
+  ];
+
+  let amount = null;
+  for(const pat of patterns){
+    const m = text.match(pat);
+    if(m){
+      const raw = m[1].replace(/\s/g,'').replace(',','.');
+      amount = parseFloat(raw);
+      if(!isNaN(amount)) break;
+    }
+  }
+
+  // Extract date from email
+  const dateMatch = text.match(/Dátum\s*:\s*(\d{2})\.(\d{2})\.(\d{4})/);
+  let emailDate = toDateStr(new Date());
+  if(dateMatch){
+    emailDate = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+  }
+
+  // Extract account number
+  const accMatch = text.match(/Účet\s*:\s*([\d]+)/);
+  const accNum = accMatch ? accMatch[1] : '';
+
+  if(amount === null || isNaN(amount)){
+    resultEl.innerHTML = '<span style="color:var(--danger)">❌ Nepodarilo sa nájsť zostatok. Skontroluj formát emailu.</span>';
+    return;
+  }
+
+  // Save
+  const prev = data.finance.unicredit;
+  data.finance.unicredit = amount;
+  data.finance.ucDate = emailDate;
+  save();
+  finRecordBalanceSnapshot();
+  renderFinPrehled();
+
+  const diff = prev !== null ? (amount - prev) : null;
+  const diffStr = diff !== null
+    ? ` <span style="color:${diff>=0?'var(--success)':'var(--danger)'}">(${diff>=0?'+':''}${fmt(diff)} € oproti predchádzajúcemu)</span>`
+    : '';
+
+  resultEl.innerHTML =
+    `<span style="color:var(--success)">✓ Zostatok aktualizovaný</span><br>
+     <span style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--accent)">${fmt(amount)} €</span>
+     ${diffStr}<br>
+     <span style="font-size:11px;color:var(--muted)">Dátum emailu: ${emailDate}${accNum?' · Účet: '+accNum:''}</span>`;
+
+  document.getElementById('fin-email-input').value = '';
+}
+
+function finImportCSV(){
+  const raw = document.getElementById('fin-csv-input').value.trim();
+  if(!raw){ alert('Vlož CSV dáta.'); return; }
+
+  const lines = raw.split('\n').filter(l=>l.trim());
+  let imported=0, skipped=0;
+  const existingIds = new Set(data.finance.transactions.map(t=>t.id));
+
+  lines.forEach(line=>{
+    // UniCredit SK CSV format: Date;Description;Amount;Currency;Balance
+    // Try semicolon first, then comma
+    const sep = line.includes(';') ? ';' : ',';
+    const parts = line.split(sep).map(p=>p.replace(/^"|"$/g,'').trim());
+    if(parts.length < 3) return;
+
+    // Parse date (DD.MM.YYYY or YYYY-MM-DD)
+    let date = parts[0];
+    if(date.match(/\d{2}\.\d{2}\.\d{4}/)){
+      const [d,m,y] = date.split('.');
+      date = `${y}-${m}-${d}`;
+    }
+    if(!date.match(/\d{4}-\d{2}-\d{2}/)) { skipped++; return; }
+
+    // Parse amount
+    const rawAmt = parts[2].replace(/\s/g,'').replace(',','.');
+    const amount = parseFloat(rawAmt);
+    if(isNaN(amount)) { skipped++; return; }
+
+    const desc = parts[1] || 'Import';
+    const uid = date+'_'+amount+'_'+desc.slice(0,10);
+
+    // Simple dedup
+    const exists = data.finance.transactions.some(t=>
+      t.date===date && t.amount===amount && t.desc===desc
+    );
+    if(exists){ skipped++; return; }
+
+    // Auto-categorize
+    let cat='ine';
+    const dl = desc.toLowerCase();
+    if(dl.includes('lidl')||dl.includes('billa')||dl.includes('kaufland')||dl.includes('tesco')||dl.includes('coop')) cat='jedlo';
+    else if(dl.includes('alza')||dl.includes('mall')||dl.includes('amazon')||dl.includes('heureka')) cat='eshop';
+    else if(dl.includes('fuel')||dl.includes('benzin')||dl.includes('shell')||dl.includes('mol')||dl.includes('autoumyv')) cat='auto';
+    else if(dl.includes('restaurant')||dl.includes('pizza')||dl.includes('burger')||dl.includes('sushi')) cat='gastro';
+    else if(dl.includes('pharmacy')||dl.includes('lekaren')||dl.includes('doctor')||dl.includes('doctor')) cat='zdravie';
+    else if(dl.includes('sport')||dl.includes('fitcentrum')||dl.includes('fitness')) cat='sport';
+
+    data.finance.transactions.push({
+      id: Date.now()+imported,
+      date, desc, cat,
+      amount, acc:'unicredit',
+      type: amount<0?'vydavok':'prijem'
+    });
+    imported++;
+  });
+
+  // Update UniCredit balance from last line if available
+  const lastLine = lines[lines.length-1];
+  const sep = lastLine.includes(';')?';':',';
+  const lastParts = lastLine.split(sep).map(p=>p.replace(/^"|"$/g,'').trim());
+  if(lastParts.length>=5){
+    const bal = parseFloat(lastParts[4].replace(/\s/g,'').replace(',','.'));
+    if(!isNaN(bal)){ data.finance.unicredit=bal; data.finance.ucDate=toDateStr(new Date()); }
+  }
+
+  save(); finRecordBalanceSnapshot();
+  document.getElementById('fin-import-result').innerHTML =
+    `<span style="color:var(--success)">✓ Importovaných: ${imported}</span>${skipped?' · <span style="color:var(--muted)">preskočených: '+skipped+'</span>':''}`;
+  renderFinPrehled();
+}
+
+
+function saveGasUrl(){
+  const url = document.getElementById('cfg-gas-url').value.trim();
+  if(!url){ alert('Vlož URL.'); return; }
+  GAS_URL = url;
+  localStorage.setItem('juraj_gas_url', url);
+  document.getElementById('gasStatus').innerHTML = '<span style="color:var(--accent)">URL uložená. Spúšťam init a sync…</span>';
+  setSyncStatus('syncing');
+  // Init sheets then sync
+  apiGet('action','init')
+    .then(()=>syncFromSheets())
+    .catch(()=>syncFromSheets());
+}
+
+
+async function pushAllToSheets(){
+  if(!GAS_URL) return;
+  setSyncStatus('syncing');
+  try {
+    // Push in sequence
+    await api('saveSettings', {settings: data.settings});
+    await api('saveFriends',  {friends:  data.friends});
+
+    // Push events one by one (only non-auto)
+    for(const ev of data.events.filter(e=>!e.auto)){
+      await api('addEvent', {event: ev});
+    }
+    // Push notes
+    for(const note of [...data.notes].reverse()){
+      await api('addNote', {note});
+    }
+    // Push finance balances
+    await api('saveBalances', {
+      unicredit: data.finance.unicredit,
+      hotovost:  data.finance.hotovost,
+      ucDate:    data.finance.ucDate,
+      cashDate:  data.finance.cashDate
+    });
+    // Push transactions
+    for(const tx of data.finance.transactions){
+      await api('addTx', {tx});
+    }
+    // Push balance history
+    for(const entry of data.finance.balanceHistory){
+      await api('saveBalHist', {entry});
+    }
+    // Push chat
+    await api('saveChat', {history: data.chatHistory.map(m=>({...m, ts: new Date().toISOString()}))});
+
+    setSyncStatus('ok');
+    document.getElementById('gasStatus').innerHTML='<span style="color:var(--success)">✓ Všetky dáta nahrané do Google Sheets — '+new Date().toLocaleTimeString('sk-SK')+'</span>';
+  } catch(e) {
+    setSyncStatus('error');
+    document.getElementById('gasStatus').innerHTML='<span style="color:var(--danger)">✗ Chyba pri nahrávaní: '+e.message+'</span>';
+  }
+}
+async function syncFromSheets(){
+  if(!GAS_URL){
+    document.getElementById('gasStatus').innerHTML='<span style="color:var(--muted)">Najprv vlož Web App URL.</span>';
+    return;
+  }
+  setSyncStatus('syncing');
+  document.getElementById('gasStatus').innerHTML='<span style="color:var(--accent)">Synchronizujem…</span>';
+  try {
+    const d = await apiGet('loadAll');
+    if(!d){ throw new Error('No data'); }
+
+    // Merge settings
+    if(d.settings && Object.keys(d.settings).length){
+      Object.assign(data.settings, d.settings);
+      loadSettingsUI();
+    }
+    // Overwrite from Sheets only if Sheets has data
+    if(d.events  && d.events.length)  data.events  = d.events;
+    if(d.notes   && d.notes.length)   data.notes   = d.notes;
+    if(d.friends && d.friends.length) data.friends = d.friends;
+    if(d.finance) data.finance = Object.assign({unicredit:null,hotovost:null,ucDate:null,cashDate:null,transactions:[],balanceHistory:[]}, d.finance);
+    if(d.chat && d.chat.length) data.chatHistory = d.chat.map(m=>({role:m.role,content:m.content}));
+
+    save();
+    syncedFromSheets = true;
+    setSyncStatus('ok');
+
+    const sheetsEmpty = !d.events?.length && !d.friends?.length && !d.notes?.length;
+    if(sheetsEmpty){
+      // Sheets is empty — push local data up
+      document.getElementById('gasStatus').innerHTML='<span style="color:var(--accent)">Sheets je prázdny — nahrávam lokálne dáta…</span>';
+      await pushAllToSheets();
+    } else {
+      document.getElementById('gasStatus').innerHTML='<span style="color:var(--success)">✓ Sync OK — '+new Date().toLocaleTimeString('sk-SK')+'</span>';
+    }
+
+    // Re-render all
+    renderEvents(); renderAllEvents(); renderCalendar();
+    renderNotes(); renderFriends(); renderFinPrehled(); renderGym();
+    if(data.chatHistory.length) restoreChat();
+
+  } catch(e){
+    setSyncStatus('error');
+    document.getElementById('gasStatus').innerHTML='<span style="color:var(--danger)">✗ Chyba: '+e.message+'</span>';
+  }
+}
+function switchTab(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── PRE-POPULATE on first install ──────────────────────
+(function seedDefaults(){
+  if(localStorage.getItem(STORE_KEY)) return; // already set up, skip
+
+  data.settings.name='Juraj';
+  data.settings.birthday='1975-12-27';
+  data.settings.namedayName='Juraj';
+  data.settings.dogTime='05:15';
+  data.settings.city='Partizánske';
+  data.settings.lat=48.6278;
+  data.settings.lon=18.3644;
+
+  // Family & friends — name + birthday (YYYY-MM-DD)
+  const people=[
+    {name:'Janka',        rel:'manželka',              birthday:'1989-02-16',         interests:''},
+    {name:'Nikolas',      rel:'syn',                   birthday:'1998-11-10',         interests:'Pokemon, barber'},
+    {name:'Šarlota',      rel:'dcéra',                 birthday:'2012-02-16',         interests:'Billy Eilish, Stranger Things'},
+    {name:'Pavol',        rel:'syn',                   birthday:'2018-06-26',         interests:'Pokemon, Lego, Sonic, Pikachu'},
+    {name:'Vladimír',     rel:'otec',                  birthday:'1951-02-18',         interests:'zbrane, kutilstvo'},
+    {name:'Peter',        rel:'brat',                  birthday:'1968-03-29',         interests:'AC/DC, Iron Maiden, F1'},
+    {name:'Zuzana',       rel:'sestra',                birthday:'1974-03-16',         interests:'hackovanie, knihy'},
+    {name:'Mária',        rel:'sestra',                birthday:'1983-02-01',         interests:''},
+    {name:'Helena',       rel:'sestra',                birthday:'1988-07-15',         interests:'vojačka, psy, turistika'},
+    {name:'Marcela',      rel:'švagriná',              birthday:'1972-07-08'},
+    {name:'Barbora',      rel:'neter - krstňa',        birthday:'1992-02-14'},
+    {name:'Andrea',       rel:'neter - krstňa',        birthday:null},
+    {name:'Vladimír Z.',  rel:'synovec - krstňák',     birthday:'1997-12-02'},
+    {name:'Peter G.',     rel:'naj priateľ',            birthday:'1975-08-28'},
+    {name:'Michaela',     rel:'manž. naj priateľa',    birthday:'1985-12-21'},
+    {name:'Rebeka',       rel:'krstňa',                birthday:null},
+    {name:'Karol',        rel:'švagor',                birthday:'1976-07-07'},
+    {name:'Jana M.',      rel:'svokra',                birthday:null},
+    {name:'Stanislav',    rel:'svokor',                birthday:'1964-04-11'},
+    {name:'Tomáš M.',     rel:'švagor',                birthday:'1991-02-10'},
+    {name:'Lukáš',        rel:'švagor',                birthday:'1994-06-24'},
+    {name:'Tomáš A.',     rel:'švagor',                birthday:'1985-12-24'},
+    {name:'Eva',          rel:'švagriná',              birthday:'1985-12-23'},
+  ];
+
+  // Add friends (for nameday tracking)
+  const namedayNames=['Janka','Nikolas','Šarlota','Pavol','Vladimír','Peter','Zuzana','Mária','Helena',
+    'Marcela','Barbora','Andrea','Vladimír','Peter','Michaela','Rebeka','Karol','Jana','Stanislav',
+    'Tomáš','Lukáš','Eva'];
+  // Use the first-name part only for nameday lookup
+  people.forEach(p=>{
+    const firstName=p.name.split(' ')[0].replace(/[.\s]/g,'');
+    let nk=null;
+    for(const[k,v]of Object.entries(NAMEDAYS)){
+      if(v&&v.split(',').some(n=>n.trim().toLowerCase()===firstName.toLowerCase())){nk=k;break;}
+    }
+    data.friends.push({name:p.name,rel:p.rel,birthday:p.birthday,namedayKey:nk});
+  });
+
+  // Add birthday events for everyone with known birthdays
+  people.forEach(p=>{
+    if(!p.birthday) return;
+    const yr=new Date().getFullYear();
+    // Add recurring birthday as yearly event — store as next occurrence
+    const bMonth=p.birthday.slice(5);// MM-DD
+    const nextBd=`${yr}-${bMonth}`;
+    const today=toDateStr(new Date());
+    const useYear=nextBd<today?yr+1:yr;
+    data.events.push({
+      id:Date.now()+Math.random(),
+      title:`Narodeniny: ${p.name} (${p.rel})`,
+      date:`${useYear}-${bMonth}`,
+      time:'',
+      type:'birthday',
+      yearlyName:p.name,
+      yearlyMonth:bMonth
+    });
+  });
+
+  save();
+})();
+
+document.addEventListener('DOMContentLoaded',()=>{const fd=document.getElementById('fin-date');if(fd)fd.value=toDateStr(new Date());});
+loadSettingsUI();renderFriends();renderEvents();renderAllEvents();renderCalendar();restoreChat();loadWeather();renderGym();renderFinPrehled();renderFinCats();
+setSyncStatus(GAS_URL?'syncing':'offline');
+if(GAS_URL){ setTimeout(syncFromSheets, 800); }
+</script>
+</body>
+</html>
