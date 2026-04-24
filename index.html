@@ -487,8 +487,8 @@ input.setting-input:focus{border-color:var(--accent)}
       <input class="quick-input" id="cfg-gas-url" placeholder="https://script.google.com/macros/s/..." style="margin-bottom:8px;font-size:11px;">
       <div style="display:flex;gap:8px;">
         <button class="btn-add" onclick="saveGasUrl()" style="flex:1">Pripojiť</button>
-        <button class="btn-sm" onclick="syncFromSheets()">Sync</button>
-        <button class="btn-sm" onclick="pushAllToSheets()" style="color:var(--accent2)">↑ Export</button>
+        <button class="btn-sm" onclick="GAS_URL=localStorage.getItem('juraj_gas_url')||GAS_URL;syncFromSheets()">Sync</button>
+        <button class="btn-sm" onclick="GAS_URL=localStorage.getItem('juraj_gas_url')||GAS_URL;pushAllToSheets()" style="color:var(--accent2)">↑ Export</button>
       </div>
       <div id="gasStatus" style="font-size:11px;color:var(--muted);margin-top:6px;"></div>
     </div>
@@ -738,7 +738,7 @@ function buildAllEvts(){
 
   // Own birthday
   if(data.settings.birthday){
-    const bd=data.settings.birthday.slice(5);
+    const bd=cleanBd(data.settings.birthday).slice(5);
     for(let i=0;i<=365;i++){
       const d=new Date(now);d.setDate(d.getDate()+i);
       const dm=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -866,18 +866,86 @@ function addFriend(){
   save();document.getElementById('friendName').value='';renderFriends();renderEvents();
 }
 function removeFriend(name){data.friends=data.friends.filter(f=>f.name!==name);save();renderFriends();renderEvents();}
+function parseBd(bd){
+  if(!bd) return '';
+  const s=String(bd);
+  const m=s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return m[3]+'.'+m[2]+'.'+m[1];
+  const d=new Date(s);
+  if(!isNaN(d.getTime())) return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();
+  return s.slice(0,10);
+}
+function cleanBd(bd){
+  if(!bd) return '';
+  const s=String(bd);
+  const m=s.match(/(\d{4}-\d{2}-\d{2})/);
+  if(m) return m[1];
+  const d=new Date(s);
+  if(!isNaN(d.getTime())) return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return '';
+}
 function renderFriends(){
   const el=document.getElementById('friendsList');
   if(!data.friends.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:4px 0">Zatiaľ nikto.</div>';return;}
-  el.innerHTML=data.friends.map(f=>{
-    const rel=f.rel?` <span style="color:var(--accent2);font-size:11px;">${f.rel}</span>`:'';
-    const bd=f.birthday?` · nar. ${f.birthday.slice(8)}.${f.birthday.slice(5,7)}.${f.birthday.slice(0,4)}`:'';
+  el.innerHTML=data.friends.map((f,i)=>{
+    const rel=f.rel?`<span style="color:var(--accent2);font-size:11px;margin-left:5px;">${f.rel}</span>`:'';
+    const bdClean=cleanBd(f.birthday);
+    const bdDisplay=bdClean?` · nar. ${parseBd(bdClean)}`:'';
     const nd=f.namedayKey?` · meniny ${f.namedayKey}`:'';
-    const interests=f.interests?`<span style="color:var(--accent);font-size:10px;"> 🎁 ${f.interests}</span>`:'';
     const safeName=f.name.replace(/'/g,"\\'");
-    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);gap:8px;"><div style="flex:1;min-width:0;"><span style="font-size:13px;">${f.name}</span>${rel}<div style="font-size:10px;color:var(--muted);margin-top:1px;">${bd}${nd}</div>${f.interests?`<div style="font-size:10px;color:var(--accent);margin-top:2px;">🎁 ${f.interests}</div>`:''}</div><button class="btn-sm" onclick="removeFriend('${safeName}')">×</button></div>`;
+    return`<div style="border-bottom:1px solid var(--border);padding:8px 0;" id="friend-row-${i}">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <span style="font-size:13px;">${f.name}</span>${rel}
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${bdDisplay}${nd}</div>
+          ${f.interests?`<div style="font-size:10px;color:var(--accent);margin-top:2px;">🎁 ${f.interests}</div>`:''}
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button class="btn-sm" onclick="editFriend(${i})" style="color:var(--accent2);">✎</button>
+          <button class="btn-sm" onclick="removeFriend('${safeName}')">×</button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
+function editFriend(i){
+  const f=data.friends[i];
+  const bdClean=cleanBd(f.birthday);
+  const row=document.getElementById('friend-row-'+i);
+  if(!row) return;
+  row.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px;padding:4px 0;">
+    <div style="display:flex;gap:6px;">
+      <input id="ef-name" class="quick-input" value="${f.name}" placeholder="Meno" style="flex:1;padding:6px 10px;font-size:13px;">
+      <input id="ef-rel" class="quick-input" value="${f.rel||''}" placeholder="Vzťah" style="flex:1;padding:6px 10px;font-size:13px;">
+    </div>
+    <div style="display:flex;gap:6px;">
+      <input type="date" id="ef-bd" class="quick-input" value="${bdClean}" style="flex:1;padding:6px 10px;font-size:13px;">
+      <input id="ef-int" class="quick-input" value="${f.interests||''}" placeholder="Záujmy" style="flex:1;padding:6px 10px;font-size:13px;">
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn-add" onclick="saveFriendEdit(${i})" style="flex:1;padding:7px;">Uložiť</button>
+      <button class="btn-sm" onclick="renderFriends()" style="flex:1;">Zrušiť</button>
+    </div>
+  </div>`;
+}
+function saveFriendEdit(i){
+  const name=document.getElementById('ef-name').value.trim();
+  const rel=document.getElementById('ef-rel').value.trim();
+  const bd=document.getElementById('ef-bd').value;
+  const interests=document.getElementById('ef-int').value.trim();
+  if(!name) return;
+  const firstName=name.split(' ')[0];
+  let nk=null;
+  for(const[k,v] of Object.entries(NAMEDAYS)){
+    if(v&&v.split(',').some(n=>n.trim().toLowerCase()===firstName.toLowerCase())){nk=k;break;}
+  }
+  data.friends[i]={name,rel,birthday:bd,namedayKey:nk,interests};
+  save();
+  api('saveFriends',{friends:data.friends});
+  renderFriends();
+  renderEvents();
+}
+
 
 function loadSettingsUI(){
   const s=data.settings;
@@ -1464,6 +1532,7 @@ function saveGasUrl(){
   if(!url){ alert('Vlož URL.'); return; }
   GAS_URL = url;
   localStorage.setItem('juraj_gas_url', url);
+  window.GAS_URL = url;
   document.getElementById('gasStatus').innerHTML = '<span style="color:var(--accent)">URL uložená. Spúšťam init a sync…</span>';
   setSyncStatus('syncing');
   // Init sheets then sync
@@ -1645,6 +1714,8 @@ function switchTab(name,btn){
 
 document.addEventListener('DOMContentLoaded',()=>{const fd=document.getElementById('fin-date');if(fd)fd.value=toDateStr(new Date());});
 loadSettingsUI();renderFriends();renderEvents();renderAllEvents();renderCalendar();restoreChat();loadWeather();renderGym();renderFinPrehled();renderFinCats();
+GAS_URL = localStorage.getItem('juraj_gas_url') || '';
+window.GAS_URL = GAS_URL;
 setSyncStatus(GAS_URL?'syncing':'offline');
 if(GAS_URL){ setTimeout(syncFromSheets, 800); }
 </script>
