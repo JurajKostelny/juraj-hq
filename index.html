@@ -1173,9 +1173,31 @@ async function sendChat(){
   const t=document.createElement('div');t.className='msg ai typing';t.textContent='Premýšľam…';
   document.getElementById('chatMessages').appendChild(t);scrollChat();
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:buildSystemPrompt(),messages:data.chatHistory})});
-    const j=await res.json();t.remove();
-    const reply=j.content?.[0]?.text||'Nastala chyba.';
+    // Try GAS proxy first, then direct with API key
+    const gasUrl = getGasUrl();
+    const apiKey = getApiKey();
+    let reply = '';
+
+    if(gasUrl){
+      const result = await api('chat', {
+        system: buildSystemPrompt(),
+        messages: data.chatHistory,
+      });
+      if(result && result.text) reply = result.text;
+    }
+
+    if(!reply && apiKey){
+      const res = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,system:buildSystemPrompt(),messages:data.chatHistory})
+      });
+      const j = await res.json();
+      if(j.content?.[0]?.text) reply = j.content[0].text;
+    }
+
+    if(!reply) reply = 'Chyba spojenia. Skontroluj API kľúč v Nastaveniach.';
+    t.remove();
     data.chatHistory.push({role:'assistant',content:reply});save();addChatMsg(reply,'ai');
   }catch(e){t.remove();addChatMsg('Chyba spojenia.','ai');}
 }
