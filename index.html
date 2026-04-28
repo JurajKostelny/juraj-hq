@@ -493,6 +493,14 @@ input.setting-input:focus{border-color:var(--accent)}
       </div>
     </div>
     <div class="card" style="margin-top:0">
+      <div class="card-title">🤖 Anthropic API kľúč (pre AI príbehy)</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Kľúč sa uloží len lokálne v tvojom prehliadači. Získaj ho na console.anthropic.com</div>
+      <input class="quick-input" id="cfg-api-key" type="password" placeholder="sk-ant-api03-..." style="margin-bottom:8px;font-size:12px;">
+      <button class="btn-add" onclick="saveApiKey()" style="width:100%;padding:8px;">Uložiť API kľúč</button>
+      <div id="apiKeyStatus" style="font-size:11px;color:var(--muted);margin-top:6px;"></div>
+    </div>
+
+    <div class="card" style="margin-top:0">
       <div class="card-title">☁️ Google Sheets sync</div>
       <div class="setting-row">
         <div><span>Web App URL</span><label>Z Google Apps Script</label></div>
@@ -532,6 +540,7 @@ function cleanSheetDate(val){
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
   // Try Date parse — only accept dates after 2000
+  // Use local date to avoid UTC timezone shift
   const d = new Date(s);
   if(!isNaN(d.getTime()) && d.getFullYear() > 2000){
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -661,6 +670,22 @@ function load(){
       let changed=false;
 
       // Fix: Vladimír (otec) birthday was incorrectly 1951-06-18, correct is 1951-02-18
+      // Fix Janka birthday 16->17 February
+      const janka=data.friends.find(f=>f.name==='Janka');
+      if(janka&&janka.birthday==='1989-02-16'){janka.birthday='1989-02-17';changed=true;}
+      // Fix Andrea birthday — was null, now 1994-10-29
+      const andrea=data.friends.find(f=>f.name==='Andrea');
+      if(andrea&&!andrea.birthday){andrea.birthday='1994-10-29';changed=true;}
+      // Fix Jana M. birthday
+      const janam=data.friends.find(f=>f.name==='Jana M.');
+      if(janam&&(!janam.birthday||janam.birthday==='1968-04-28')){janam.birthday='1968-04-29';changed=true;}
+      // Fix Rebeka birthday
+      const rebeka=data.friends.find(f=>f.name==='Rebeka');
+      if(rebeka&&!rebeka.birthday){rebeka.birthday='2025-06-16';changed=true;}
+      // Update all interests from new data
+      const newInterests={'Janka':'Starostlivosť o vlasy, varenie, hrnčiarstvo, DIY hobby','Mária':'drotikovanie, hackovanie','Marcela':'dobré jedlo a knihy','Vladimír Z.':'PC hry','Peter G.':'Karel Zeman','Michaela':'Kvetiny a home design','Karol':'AC/DC, Heavy metal','Jana M.':'Kvetiny a záhradka','Stanislav':'Ružový Gin','Tomáš M.':'Pivo a rybolov','Lukáš':'Xbox','Tomáš A.':'Real Madrid','Eva':'Foo Fighters'};
+      data.friends.forEach(f=>{if(newInterests[f.name]&&f.interests!==newInterests[f.name]){f.interests=newInterests[f.name];changed=true;}});
+
       const otec=data.friends.find(f=>f.name==='Vladimír'&&f.rel==='otec');
       if(otec&&otec.birthday==='1951-06-18'){otec.birthday='1951-02-18';changed=true;}
 
@@ -691,13 +716,26 @@ function load(){
 
       // Add interests to existing friends (migration from older versions)
       const interestsMap = {
+        'Janka':     'Starostlivosť o vlasy, varenie, hrnčiarstvo, DIY hobby',
         'Nikolas':   'Pokemon, barber',
         'Šarlota':   'Billy Eilish, Stranger Things',
         'Pavol':     'Pokemon, Lego, Sonic, Pikachu',
         'Vladimír':  'zbrane, kutilstvo',
         'Peter':     'AC/DC, Iron Maiden, F1',
         'Zuzana':    'hackovanie, knihy',
+        'Mária':     'drotikovanie, hackovanie',
         'Helena':    'vojačka, psy, turistika',
+        'Marcela':   'dobré jedlo a knihy',
+        'Vladimír Z.': 'PC hry',
+        'Peter G.':  'Karel Zeman',
+        'Michaela':  'Kvetiny a home design',
+        'Karol':     'AC/DC, Heavy metal',
+        'Jana M.':   'Kvetiny a záhradka',
+        'Stanislav': 'Ružový Gin',
+        'Tomáš M.':  'Pivo a rybolov',
+        'Lukáš':     'Xbox',
+        'Tomáš A.':  'Real Madrid',
+        'Eva':       'Foo Fighters',
       };
       data.friends.forEach(f=>{
         const key=f.name.split(' ')[0];
@@ -734,6 +772,22 @@ function load(){
           changed=true;
         }
       });
+      // Fix namedayKey — recalculate for all friends
+      const correctNDs = {'Janka':'08-21','Nikolas':'12-06','Šarlota':'07-15','Pavol':'06-29','Vladimír':'07-24','Peter':'06-29','Zuzana':'08-11','Mária':'09-08','Helena':'08-18','Marcela':'08-15','Barbora':'12-04','Andrea':'01-05','Vladimír Z.':'07-24','Peter G.':'06-29','Michaela':'09-29','Rebeka':'09-02','Karol':'11-04','Jana M.':'08-21','Stanislav':'11-13','Tomáš M.':'03-06','Lukáš':'10-18','Tomáš A.':'03-06','Eva':'12-24'};
+      data.friends.forEach(f=>{
+        if(correctNDs.hasOwnProperty(f.name) && f.namedayKey !== correctNDs[f.name]){
+          f.namedayKey = correctNDs[f.name]; changed=true;
+        }
+      });
+      // Fix namedayKey ISO timestamps from Sheets
+      data.friends.forEach(f=>{
+        if(f.namedayKey){
+          const nk=String(f.namedayKey);
+          const m=nk.match(/-(\d{2})-(\d{2})T/);
+          if(m){ f.namedayKey=m[1]+'-'+m[2]; changed=true; }
+        }
+      });
+
       if(changed) localStorage.setItem(STORE_KEY,JSON.stringify(data));
     }
   }catch(e){}
@@ -826,6 +880,25 @@ function buildAllEvts(){
       const nd=NAMEDAYS[key];
       if(nd&&nd.split(',').some(n=>n.trim().toLowerCase()===firstName.toLowerCase())){
         all.push({id:'nd-'+f.name+key,title:'Meniny: '+f.name+(f.rel?' ('+f.rel+')':''),date:toDateStr(d),type:'nameday',auto:true});
+      }
+    }
+  });
+
+  // Birthdays from friends array (dynamic — covers edits and new entries)
+  data.friends.forEach(f=>{
+    if(!f.birthday) return;
+    const bdClean = cleanBd(f.birthday);
+    if(!bdClean) return;
+    const bMonth = bdClean.slice(5); // MM-DD
+    for(let i=0;i<=365;i++){
+      const d=new Date(now);d.setDate(d.getDate()+i);
+      const dm=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      if(dm===bMonth){
+        const bdKey='bd-friend-'+f.name+dm;
+        if(!all.find(e=>e.id===bdKey)){
+          all.push({id:bdKey,title:'Narodeniny: '+f.name+(f.rel?' ('+f.rel+')':''),date:toDateStr(d),type:'birthday',auto:true});
+        }
+        break;
       }
     }
   });
@@ -962,18 +1035,26 @@ function addFriend(){
 function removeFriend(name){data.friends=data.friends.filter(f=>f.name!==name);save();renderFriends();renderEvents();}
 function parseBd(bd){
   if(!bd) return '';
-  const s=String(bd);
-  const m=s.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if(m) return m[3]+'.'+m[2]+'.'+m[1];
-  const d=new Date(s);
-  if(!isNaN(d.getTime())) return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();
-  return s.slice(0,10);
+  const clean = cleanBd(bd);
+  if(clean && clean.match(/^\d{4}-\d{2}-\d{2}$/)){
+    return clean.slice(8)+'.'+clean.slice(5,7)+'.'+clean.slice(0,4);
+  }
+  return bd.toString().slice(0,10);
 }
 function cleanBd(bd){
   if(!bd) return '';
-  const s=String(bd);
-  const m=s.match(/(\d{4}-\d{2}-\d{2})/);
-  if(m) return m[1];
+  const s=String(bd).trim();
+  // Already YYYY-MM-DD
+  if(s.match(/^\d{4}-\d{2}-\d{2}$/)) return s;
+  // ISO with time — use LOCAL date not UTC to avoid timezone shift
+  // e.g. "1964-04-28T22:00:00.000Z" should be "1964-04-29" in CET
+  if(s.includes('T')){
+    const d = new Date(s);
+    if(!isNaN(d.getTime())){
+      // Use local date (getFullYear/getMonth/getDate) not UTC
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    }
+  }
   const d=new Date(s);
   if(!isNaN(d.getTime())) return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   return '';
@@ -985,7 +1066,18 @@ function renderFriends(){
     const rel=f.rel?`<span style="color:var(--accent2);font-size:11px;margin-left:5px;">${f.rel}</span>`:'';
     const bdClean=cleanBd(f.birthday);
     const bdDisplay=bdClean?` · nar. ${parseBd(bdClean)}`:'';
-    const nd=f.namedayKey?` · meniny ${f.namedayKey}`:'';
+    // Clean namedayKey — Sheets may convert to ISO date
+    let namedayDisplay = '';
+    if(f.namedayKey){
+      const nk = String(f.namedayKey);
+      // Extract MM-DD from ISO "2026-11-07T23:00:00.000Z" or keep "11-07"
+      const mMatch = nk.match(/-(\d{2})-(\d{2})T/);
+      const mmdd = mMatch ? mMatch[1]+'-'+mMatch[2] : (nk.match(/^\d{2}-\d{2}$/) ? nk : '');
+      // Verify in NAMEDAYS
+      const ndName = mmdd ? NAMEDAYS[mmdd] : '';
+      namedayDisplay = mmdd ? ` · meniny ${mmdd}${ndName?' ('+ndName+')':''}` : '';
+    }
+    const nd = namedayDisplay;
     const safeName=f.name.replace(/'/g,"\\'");
     return`<div style="border-bottom:1px solid var(--border);padding:8px 0;" id="friend-row-${i}">
       <div style="display:flex;align-items:flex-start;gap:8px;">
@@ -1045,6 +1137,8 @@ function loadSettingsUI(){
   const s=data.settings;
   const gasInput=document.getElementById('cfg-gas-url');
   if(gasInput) gasInput.value=GAS_URL||'';
+  const apiInput=document.getElementById('cfg-api-key');
+  if(apiInput && localStorage.getItem('juraj_api_key')) apiInput.placeholder='✓ Kľúč uložený';
   document.getElementById('cfg-name').value=s.name||'';
   document.getElementById('cfg-birthday').value=s.birthday||'';
   document.getElementById('cfg-nameday-name').value=s.namedayName||'';
@@ -1621,6 +1715,19 @@ function finImportCSV(){
 }
 
 
+
+function saveApiKey(){
+  const key = document.getElementById('cfg-api-key').value.trim();
+  if(!key){ alert('Vlož API kľúč.'); return; }
+  if(!key.startsWith('sk-ant-')){ alert('Neplatný formát kľúča.'); return; }
+  localStorage.setItem('juraj_api_key', key);
+  document.getElementById('cfg-api-key').value = '';
+  document.getElementById('cfg-api-key').placeholder = '✓ Kľúč uložený';
+  document.getElementById('apiKeyStatus').innerHTML = '<span style="color:var(--success)">✓ API kľúč uložený</span>';
+}
+
+function getApiKey(){ return localStorage.getItem('juraj_api_key') || ''; }
+
 function saveGasUrl(){
   const url = document.getElementById('cfg-gas-url').value.trim();
   if(!url){ alert('Vlož URL.'); return; }
@@ -1758,38 +1865,52 @@ async function loadStoryInspiration(force=false){
   const topic = topics[Math.floor(Math.random() * topics.length)];
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        messages: [{
-          role: 'user',
-          content: `Vygeneruj krátku inšpiráciu na večerný rozprávkový príbeh pre 7-ročného chlapca menom Pavol, ktorý má rád ${topic}. 
+    let html = '';
+    const apiKey = getApiKey();
 
-Formát:
-🔬 **[Názov témy]**
-[1-2 vety jednoduché vysvetlenie pre dieťa — maximálne zrozumiteľné, s príkladom z každodenného života]
+    // Try real AI if API key available
+    if(apiKey){
+      try {
+        const prompt = `Vygeneruj krátku inšpiráciu na večerný rozprávkový príbeh pre 7-ročného chlapca menom Pavol, ktorý má rád ${topic}. Formát: riadok 1: emoji + tučný názov témy, riadok 2-3: jednoduché vysvetlenie pre dieťa s príkladom, riadok 4: prázdny, riadok 5: "💡 Nápad na príbeh:" a 1 veta nápad na dobrodružstvo. Slovenčina, max 80 slov, kreatívny.`;
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+          body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:250,messages:[{role:'user',content:prompt}]})
+        });
+        const j = await res.json();
+        if(j.content?.[0]?.text){
+          html = j.content[0].text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+          document.getElementById('storyContent').innerHTML = html;
+          document.getElementById('storyTime').textContent = 'AI · ' + String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+          localStorage.setItem(todayKey, html);
+          return;
+        }
+      } catch(e){ console.warn('AI story error:', e); }
+    }
 
-💡 **Nápad na príbeh:**
-[1 veta — konkrétny nápad ako z toho urobiť dobrodružný príbeh napr. s hrdinom, dobrodružstvom]
+    // Local story bank — used when API key not available
+    const stories = [
+      '<strong>🔬 Gravitácia</strong><br>Keď pustíš jablko, vždy padne dolu — gravitácia ťahá všetko k Zemi. Preto aj keď skočíš čo najvyššie, vždy sa vrátíš späť!<br><br><strong style="color:var(--accent2)">💡 Nápad na príbeh:</strong><br>Malý astronaut Pavol objaví planétu kde gravitácia funguje naopak — všetko padá hore!',
+      '<strong>🔬 Magnetizmus</strong><br>Magnet priťahuje železo ako kúzlo — každý magnet má severný a južný pól a rovnaké póly sa odpudzujú!<br><br><strong style="color:var(--accent2)">💡 Nápad na príbeh:</strong><br>Pavol nájde supermagnety ktoré dokážu priťahovať čokoľvek — dokonca aj oblaky na nebi!',
+      '<strong>🔢 Prvočísla</strong><br>Čísla 2, 3, 5, 7 sú špeciálne — nedajú sa rozdeliť na menšie kúsky. Sú to stavebné kamene všetkých čísel!<br><br><strong style="color:var(--accent2)">💡 Nápad na príbeh:</strong><br>Pavol objaví tajný kód z prvočísel, ktorý vedie k zakopaného pokladu.',
+      '<strong>🔬 Svetlo</strong><br>Svetlo cestuje tak rýchlo, že obehne celú Zem 7-krát za jednu sekundu! Preto keď rozsvietíš lampu, okamžite vidíš svetlo.<br><br><strong style="color:var(--accent2)">💡 Nápad na príbeh:</strong><br>Pavol dostane okuliare ktoré mu umožnia vidieť svetlo spomalené a objaví neviditeľný svet farieb.',
+      '<strong>🔢 Fibonacci</strong><br>1, 1, 2, 3, 5, 8, 13 — každé číslo je súčet dvoch predchádzajúcich. Toto číslo nájdeš v slnečnici, šnekovi aj v tvojich prstoch!<br><br><strong style="color:var(--accent2)">💡 Nápad na príbeh:</strong><br>Pavol objaví že kvetiny v záhrade skrývajú tajný matematický kód prírody.',
+      '<strong>🔬 Zvuk</strong><br>Zvuk sú vibrácie — keď buchneš do bubna, vzduch okolo sa rozochvieva a to počujeme. Pod vodou znie všetko inak!<br><br><strong style="color:var(--accent2)">💡 Nápad na príbeh:</strong><br>Pavol vynájde prístroj ktorý zmení akýkoľvek zvuk na viditeľné farebné vlny.',
+      '<strong>🔢 Zlatý rez</strong><br>Číslo 1.618 — zlatý rez nájdeme v špirálach ulít, ľudskom tele aj stavbách. Príroda ho zbožňuje!<br><br><strong style="color:var(--accent2)">💡 Nápad na príbeh:</strong><br>Pavol zistí že stará mapa k pokladu je nakreslená presne podľa zlatého rezu.',
+      '<strong>🔬 Elektrina</strong><br>Elektriny sa neboj — je to pohyb malých častíc cez drôt. Blesk je obrovský elektrický výboj medzi oblakom a zemou!<br><br><strong style="color:var(--accent2)">💡 Nápad na príbeh:</strong><br>Pavol zostrojí malý generátor z bicykla a osvetlí celú jaskyňu plnú pokladov.',
+      '<strong>🔢 Nekonečno</strong><br>Čísla nikdy nekončia — po miliarde príde miliarda a jedna, a tak donekonečna. Ani vesmír nemá okraj!<br><br><strong style="color:var(--accent2)">💡 Nápad na príbeh:</strong><br>Pavol nájde knihu ktorá má nekonečno stránok a každá stránka opisuje iný vesmír.',
+      '<strong>🔬 Teplo</strong><br>Teplo je vlastne pohyb malých častíc — čím rýchlejšie sa pohybujú, tým je teplejšie. Preto sa trením rúk zahreje!<br><br><strong style="color:var(--accent2)">💡 Nápad na príbeh:</strong><br>Pavol objaví kameň ktorý uchováva teplo slnka aj v noci a zachráni ním celú dedinu v zime.',
+    ];
+    const dayIdx = new Date().getDate() % stories.length;
+    html = stories[dayIdx];
 
-Odpovedaj len v slovenčine, buď kreatívny a zábavný.`
-        }]
-      })
-    });
-    const j = await res.json();
-    const text = j.content?.[0]?.text || 'Nepodarilo sa načítať inšpiráciu.';
-    const html = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-    document.getElementById('storyContent').innerHTML = html;
-    document.getElementById('storyContent').innerHTML = html;
-    document.getElementById('storyTime').textContent = 'Vygenerované o ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('storyTime').textContent = 'Inšpirácia č. ' + (dayIdx+1);
     localStorage.setItem(todayKey, html);
   } catch(e) {
-    document.getElementById('storyContent').innerHTML = '<span style="color:var(--muted)">Chyba načítania. Skontroluj pripojenie.</span>';
+    document.getElementById('storyContent').innerHTML = '<span style="color:var(--muted)">Chyba načítania.</span>';
   }
 }
+
 
 // Check story time every minute
 setInterval(()=>{
@@ -1820,29 +1941,29 @@ function switchTab(name,btn){
 
   // Family & friends — name + birthday (YYYY-MM-DD)
   const people=[
-    {name:'Janka',        rel:'manželka',              birthday:'1989-02-16',         interests:''},
-    {name:'Nikolas',      rel:'syn',                   birthday:'1998-11-10',         interests:'Pokemon, barber'},
-    {name:'Šarlota',      rel:'dcéra',                 birthday:'2012-02-16',         interests:'Billy Eilish, Stranger Things'},
-    {name:'Pavol',        rel:'syn',                   birthday:'2018-06-26',         interests:'Pokemon, Lego, Sonic, Pikachu'},
-    {name:'Vladimír',     rel:'otec',                  birthday:'1951-02-18',         interests:'zbrane, kutilstvo'},
-    {name:'Peter',        rel:'brat',                  birthday:'1968-03-29',         interests:'AC/DC, Iron Maiden, F1'},
-    {name:'Zuzana',       rel:'sestra',                birthday:'1974-03-16',         interests:'hackovanie, knihy'},
-    {name:'Mária',        rel:'sestra',                birthday:'1983-02-01',         interests:''},
-    {name:'Helena',       rel:'sestra',                birthday:'1988-07-15',         interests:'vojačka, psy, turistika'},
-    {name:'Marcela',      rel:'švagriná',              birthday:'1972-07-08'},
-    {name:'Barbora',      rel:'neter - krstňa',        birthday:'1992-02-14'},
-    {name:'Andrea',       rel:'neter - krstňa',        birthday:null},
-    {name:'Vladimír Z.',  rel:'synovec - krstňák',     birthday:'1997-12-02'},
-    {name:'Peter G.',     rel:'naj priateľ',            birthday:'1975-08-28'},
-    {name:'Michaela',     rel:'manž. naj priateľa',    birthday:'1985-12-21'},
-    {name:'Rebeka',       rel:'krstňa',                birthday:null},
-    {name:'Karol',        rel:'švagor',                birthday:'1976-07-07'},
-    {name:'Jana M.',      rel:'svokra',                birthday:null},
-    {name:'Stanislav',    rel:'svokor',                birthday:'1964-04-11'},
-    {name:'Tomáš M.',     rel:'švagor',                birthday:'1991-02-10'},
-    {name:'Lukáš',        rel:'švagor',                birthday:'1994-06-24'},
-    {name:'Tomáš A.',     rel:'švagor',                birthday:'1985-12-24'},
-    {name:'Eva',          rel:'švagriná',              birthday:'1985-12-23'},
+    {name:'Janka', rel:'manželka', birthday:'1989-02-17', namedayKey:'08-21', interests:'Starostlivosť o vlasy, varenie, hrnčiarstvo, DIY hobby'},
+    {name:'Nikolas', rel:'syn', birthday:'1998-11-10', namedayKey:'12-06', interests:'Pokemon, barber'},
+    {name:'Šarlota', rel:'dcéra', birthday:'2012-02-16', namedayKey:'07-15', interests:'Billy Eilish, Stranger Things'},
+    {name:'Pavol', rel:'syn', birthday:'2018-06-26', namedayKey:'06-29', interests:'Pokemon, Lego, Sonic, Pikachu'},
+    {name:'Vladimír', rel:'otec', birthday:'1951-02-18', namedayKey:'07-24', interests:'zbrane, kutilstvo'},
+    {name:'Peter', rel:'brat', birthday:'1968-03-29', namedayKey:'06-29', interests:'AC/DC, Iron Maiden, F1'},
+    {name:'Zuzana', rel:'sestra', birthday:'1974-03-16', namedayKey:'08-11', interests:'hackovanie, knihy'},
+    {name:'Mária', rel:'sestra', birthday:'1983-02-01', namedayKey:'09-08', interests:'drotikovanie, hackovanie'},
+    {name:'Helena', rel:'sestra', birthday:'1988-07-15', namedayKey:'08-18', interests:'vojačka, psy, turistika'},
+    {name:'Marcela', rel:'švagriná', birthday:'1972-07-08', namedayKey:'08-15', interests:'dobré jedlo a knihy'},
+    {name:'Barbora', rel:'neter - krstňa', birthday:'1992-02-14', namedayKey:'12-04', interests:''},
+    {name:'Andrea', rel:'neter - krstňa', birthday:'1994-10-29', namedayKey:'01-05', interests:''},
+    {name:'Vladimír Z.', rel:'synovec - krstňák', birthday:'1997-12-02', namedayKey:'07-24', interests:'PC hry'},
+    {name:'Peter G.', rel:'naj priateľ', birthday:'1975-08-28', namedayKey:'06-29', interests:'Karel Zeman'},
+    {name:'Michaela', rel:'manž. naj priateľa', birthday:'1985-12-21', namedayKey:'09-29', interests:'Kvetiny a home design'},
+    {name:'Rebeka', rel:'krstňa', birthday:'2025-06-16', namedayKey:'09-02', interests:''},
+    {name:'Karol', rel:'švagor', birthday:'1976-07-07', namedayKey:'11-04', interests:'AC/DC, Heavy metal'},
+    {name:'Jana M.', rel:'svokra', birthday:'1968-04-29', namedayKey:'08-21', interests:'Kvetiny a záhradka'},
+    {name:'Stanislav', rel:'svokor', birthday:'1964-04-11', namedayKey:'11-13', interests:'Ružový Gin'},
+    {name:'Tomáš M.', rel:'švagor', birthday:'1991-02-10', namedayKey:'03-06', interests:'Pivo a rybolov'},
+    {name:'Lukáš', rel:'švagor', birthday:'1994-06-24', namedayKey:'10-18', interests:'Xbox'},
+    {name:'Tomáš A.', rel:'švagor', birthday:'1985-12-24', namedayKey:'03-06', interests:'Real Madrid'},
+    {name:'Eva', rel:'švagriná', birthday:'1985-12-23', namedayKey:'12-24', interests:'Foo Fighters'},
   ];
 
   // Add friends (for nameday tracking)
