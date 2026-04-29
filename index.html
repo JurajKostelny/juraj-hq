@@ -579,6 +579,7 @@ const STORE_KEY='juraj_hq_v1';
 // ── Google Apps Script endpoint ──────────────────────────────────
 // Po nasadení skriptu vlož sem svoju Web App URL:
 let GAS_URL = localStorage.getItem('juraj_gas_url') || '';
+const WORKER_URL = 'https://juraj-proxy.jurajkostelny.workers.dev';
 setTimeout(loadStoryInspiration, 1000);
 
 function getGasUrl(){ return window.GAS_URL || localStorage.getItem('juraj_gas_url') || ''; }
@@ -658,12 +659,27 @@ function load(){
       // Fix settings dogTime
       if(data.settings.dogTime) data.settings.dogTime = cleanSheetTime(data.settings.dogTime) || '05:15';
 
-      // Deduplicate events by title+date
+      // Clean dates first, then deduplicate by title+cleanDate
+      data.events = data.events.map(e => ({
+        ...e,
+        date: cleanSheetDate(e.date) || e.date,
+        time: cleanSheetTime(e.time) || '',
+      }));
+
+      // Strong dedup — by title alone for reminders, title+date for others
       const seen = new Set();
+      const seenTitles = new Set();
       data.events = data.events.filter(e => {
-        const key = e.title + '|' + e.date;
+        const cleanDate = cleanSheetDate(e.date) || e.date;
+        const key = e.title + '|' + cleanDate;
+        // For reminders with same title, keep only one
+        if(e.type === 'reminder' || e.type === 'birthday') {
+          if(seenTitles.has(e.title)) return false;
+          seenTitles.add(e.title);
+        }
         if(seen.has(key)) return false;
-        seen.add(key); return true;
+        seen.add(key);
+        return true;
       });
 
       // ── DATA MIGRATIONS ──────────────────────────────
@@ -745,7 +761,8 @@ function load(){
       });
 
 
-      // Obhliadky nehnuteľností — apríl 2026
+      // Obhliadky nehnuteľností — apríl 2026 (len ak neexistujú)
+      if(!data.events.some(e=>e.title&&e.title.includes('Obhliadka'))) {
       const obhliadky = [
         {date:'2026-04-27', time:'16:00', title:'🏠 Obhliadka — Čerenany (bazos.sk)', note:'Tel: 0915750120 · reality.bazos.sk/inzerat/189659953'},
         {date:'2026-04-27', time:'17:00', title:'🏠 Obhliadka — Kolačno 1395m²', note:'Tel: 0908224482 · reality.sk/domy/kolacne-pozemok-1395-m2'},
@@ -759,8 +776,10 @@ function load(){
           changed=true;
         }
       });
+      } // end obhliadky check
 
-      // Pripomienky deň pred obhliadkou
+      // Pripomienky deň pred obhliadkou (len ak neexistujú)
+      if(!data.events.some(e=>e.title&&e.title.includes('Zajtra obhliadky'))) {
       const reminders = [
         {date:'2026-04-26', time:'20:00', title:'🔔 Zajtra obhliadky: Čerenany 16:00, Kolačno 17:00'},
         {date:'2026-04-27', time:'20:00', title:'🔔 Zajtra obhliadka: Prašice 15:00 · Tel: 0915409737'},
@@ -772,21 +791,10 @@ function load(){
           changed=true;
         }
       });
-      // Fix namedayKey — recalculate for all friends
+      } // end reminders check
+      // ALWAYS overwrite namedayKey — unconditional, no conditions
       const correctNDs = {'Janka':'08-21','Nikolas':'12-06','Šarlota':'07-15','Pavol':'06-29','Vladimír':'07-24','Peter':'06-29','Zuzana':'08-11','Mária':'09-08','Helena':'08-18','Marcela':'08-15','Barbora':'12-04','Andrea':'01-05','Vladimír Z.':'07-24','Peter G.':'06-29','Michaela':'09-29','Rebeka':'09-02','Karol':'11-04','Jana M.':'08-21','Stanislav':'11-13','Tomáš M.':'03-06','Lukáš':'10-18','Tomáš A.':'03-06','Eva':'12-24'};
-      data.friends.forEach(f=>{
-        if(correctNDs.hasOwnProperty(f.name) && f.namedayKey !== correctNDs[f.name]){
-          f.namedayKey = correctNDs[f.name]; changed=true;
-        }
-      });
-      // Fix namedayKey ISO timestamps from Sheets
-      data.friends.forEach(f=>{
-        if(f.namedayKey){
-          const nk=String(f.namedayKey);
-          const m=nk.match(/-(\d{2})-(\d{2})T/);
-          if(m){ f.namedayKey=m[1]+'-'+m[2]; changed=true; }
-        }
-      });
+      data.friends.forEach(f=>{ if(correctNDs.hasOwnProperty(f.name)){ f.namedayKey=correctNDs[f.name]; changed=true; } });
 
       if(changed) localStorage.setItem(STORE_KEY,JSON.stringify(data));
     }
@@ -869,7 +877,8 @@ function clearEvents(){if(!confirm('Vymazať všetky udalosti?'))return;data.eve
 
 function buildAllEvts(){
   const now=new Date();
-  const all=[...data.events];
+  // Only include manual events — birthday/nameday are generated dynamically below
+  const all=data.events.filter(e=>e.type!=='birthday'&&e.type!=='nameday'||e.auto!==true);
 
   // Namedays for friends (next 30 days)
   data.friends.forEach(f=>{
@@ -949,7 +958,16 @@ function buildAllEvts(){
     }
   }
 
-  return all.sort((a,b)=>a.date.localeCompare(b.date));
+  // Final dedup by title for reminders/birthdays
+  const finalSeen = new Set();
+  const deduped = all.filter(e=>{
+    if(e.type==='reminder'||e.type==='birthday'||e.type==='nameday'){
+      if(finalSeen.has(e.title)) return false;
+      finalSeen.add(e.title);
+    }
+    return true;
+  });
+  return deduped.sort((a,b)=>a.date.localeCompare(b.date));
 }
 
 function renderEvents(){
@@ -968,7 +986,7 @@ function evtHTML(e,mode){
   let wl='';
   if(mode==='today'){wl=`<span class="event-when today">${e.time||'dnes'}</span>`;}
   else{const diff=Math.round((new Date(e.date)-new Date(toDateStr(new Date())))/86400000);wl=`<span class="event-when ${diff===1?'tomorrow':''}">${diff===1?'zajtra':diff+'d'}</span>`;}
-  return`<div class="event-item"><div class="event-dot ${dc}"></div><div class="event-content"><div class="event-title">${e.title}</div>${e.time?`<div class="event-sub">${e.time}</div>`:''} ${e.note?`<div class="event-sub" style="color:var(--accent2);">${e.note}</div>`:''}</div>${wl}</div>`;
+  return`<div class="event-item"><div class="event-dot ${dc}"></div><div class="event-content"><div class="event-title">${e.title}</div>${e.time?`<div class="event-sub">${cleanSheetTime(e.time)||e.time}</div>`:''} ${e.note?`<div class="event-sub" style="color:var(--accent2);">${e.note}</div>`:''}</div>${wl}</div>`;
 }
 
 function renderAllEvents(){
@@ -976,7 +994,7 @@ function renderAllEvents(){
   const sorted=[...data.events].sort((a,b)=>a.date.localeCompare(b.date));
   if(!sorted.length){el.innerHTML='<div class="empty-state">Zatiaľ žiadne udalosti</div>';return;}
   const dotBg=t=>t==='birthday'?'#c87070':t==='nameday'?'var(--accent)':t==='reminder'?'var(--accent2)':'#70c8a0';
-  el.innerHTML=sorted.map(e=>`<div class="card" style="margin-bottom:6px;padding:10px 14px;display:flex;align-items:center;gap:10px;"><div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${dotBg(e.type)}"></div><div style="flex:1"><div style="font-size:13px;">${e.title}</div><div style="font-size:11px;color:var(--muted);">${e.date}${e.time?' · '+e.time:''}</div></div><button class="btn-sm" onclick="deleteEvent(${e.id})" style="color:var(--danger)">×</button></div>`).join('');
+  el.innerHTML=sorted.map(e=>`<div class="card" style="margin-bottom:6px;padding:10px 14px;" id="evt-row-${e.id}"><div style="display:flex;align-items:center;gap:10px;"><div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${dotBg(e.type)}"></div><div style="flex:1"><div style="font-size:13px;">${e.title}</div><div style="font-size:11px;color:var(--muted);">${cleanSheetDate(e.date)||e.date}${e.time?" · "+cleanSheetTime(e.time):""}</div></div><button class="btn-sm" onclick="editEvent(${e.id})" style="color:var(--accent2);">✎</button><button class="btn-sm" onclick="deleteEvent(${e.id})" style="color:var(--danger)">×</button></div></div>`).join('');
 }
 
 let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
@@ -999,6 +1017,49 @@ function renderCalendar(){
   for(let i=1;i<=rem;i++)html+=`<div class="cal-day other-month">${i}</div>`;
   grid.innerHTML=html;
 }
+
+function editEvent(id){
+  const e = data.events.find(ev=>ev.id===id);
+  if(!e) return;
+  const row = document.getElementById('evt-row-'+id);
+  if(!row) return;
+  const cleanDate = cleanSheetDate(e.date)||e.date;
+  const cleanTime = cleanSheetTime(e.time)||e.time||'';
+  row.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px;padding:2px 0;">
+    <input id="ee-title" class="quick-input" value="${e.title.replace(/'/g,"&#39;")}" style="font-size:13px;padding:6px 10px;">
+    <div style="display:flex;gap:6px;">
+      <input type="date" id="ee-date" class="quick-input" value="${cleanDate}" style="flex:1;padding:6px 10px;font-size:13px;">
+      <input type="time" id="ee-time" class="quick-input" value="${cleanTime}" style="width:100px;padding:6px 10px;font-size:13px;">
+    </div>
+    <select id="ee-type" class="quick-input" style="font-size:13px;padding:6px 10px;">
+      <option value="event" ${e.type==='event'?'selected':''}>Udalosť</option>
+      <option value="reminder" ${e.type==='reminder'?'selected':''}>Pripomienka</option>
+      <option value="birthday" ${e.type==='birthday'?'selected':''}>Narodeniny</option>
+    </select>
+    <div style="display:flex;gap:6px;">
+      <button class="btn-add" onclick="saveEventEdit(${id})" style="flex:1;padding:7px;">Uložiť</button>
+      <button class="btn-sm" onclick="renderAllEvents()" style="flex:1;">Zrušiť</button>
+    </div>
+  </div>`;
+}
+
+function saveEventEdit(id){
+  const idx = data.events.findIndex(ev=>ev.id===id);
+  if(idx===-1) return;
+  const title = document.getElementById('ee-title').value.trim();
+  const date  = document.getElementById('ee-date').value;
+  const time  = document.getElementById('ee-time').value;
+  const type  = document.getElementById('ee-type').value;
+  if(!title||!date) return;
+  data.events[idx] = {...data.events[idx], title, date, time, type};
+  save();
+  api('deleteEvent',{id});
+  api('addEvent',{event:data.events[idx]});
+  renderAllEvents();
+  renderEvents();
+  renderCalendar();
+}
+
 function calNav(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
 function calDayClick(ds){document.getElementById('evtDate').value=ds;document.getElementById('evtTitle').focus();}
 
@@ -1173,30 +1234,22 @@ async function sendChat(){
   const t=document.createElement('div');t.className='msg ai typing';t.textContent='Premýšľam…';
   document.getElementById('chatMessages').appendChild(t);scrollChat();
   try{
-    // Try GAS proxy first, then direct with API key
-    const gasUrl = getGasUrl();
-    const apiKey = getApiKey();
     let reply = '';
-
-    if(gasUrl){
-      const result = await api('chat', {
-        system: buildSystemPrompt(),
-        messages: data.chatHistory,
-      });
-      if(result && result.text) reply = result.text;
-    }
-
-    if(!reply && apiKey){
-      const res = await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
-        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,system:buildSystemPrompt(),messages:data.chatHistory})
+    try {
+      const res = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          action: 'chat',
+          system: buildSystemPrompt(),
+          messages: data.chatHistory
+        })
       });
       const j = await res.json();
-      if(j.content?.[0]?.text) reply = j.content[0].text;
-    }
+      if(j.ok && j.text) reply = j.text;
+    } catch(e){ console.warn('Worker error:', e); }
 
-    if(!reply) reply = 'Chyba spojenia. Skontroluj API kľúč v Nastaveniach.';
+    if(!reply) reply = 'Chyba spojenia so serverom.';
     t.remove();
     data.chatHistory.push({role:'assistant',content:reply});save();addChatMsg(reply,'ai');
   }catch(e){t.remove();addChatMsg('Chyba spojenia.','ai');}
@@ -1825,7 +1878,18 @@ async function syncFromSheets(){
     // Overwrite from Sheets only if Sheets has data
     if(d.events  && d.events.length)  data.events  = d.events;
     if(d.notes   && d.notes.length)   data.notes   = d.notes;
-    if(d.friends && d.friends.length) data.friends = d.friends;
+    if(d.friends && d.friends.length){
+      data.friends = d.friends;
+      // Always fix namedays AND birthdays after sync — Sheets corrupts them
+      const correctNDs = {'Janka':'08-21','Nikolas':'12-06','Šarlota':'07-15','Pavol':'06-29','Vladimír':'07-24','Peter':'06-29','Zuzana':'08-11','Mária':'09-08','Helena':'08-18','Marcela':'08-15','Barbora':'12-04','Andrea':'01-05','Vladimír Z.':'07-24','Peter G.':'06-29','Michaela':'09-29','Rebeka':'09-02','Karol':'11-04','Jana M.':'08-21','Stanislav':'11-13','Tomáš M.':'03-06','Lukáš':'10-18','Tomáš A.':'03-06','Eva':'12-24'};
+      const correctBDs = {'Janka':'1989-02-17','Nikolas':'1998-11-10','Šarlota':'2012-02-16','Pavol':'2018-06-26','Vladimír':'1951-02-18','Peter':'1968-03-29','Zuzana':'1974-03-16','Mária':'1983-02-01','Helena':'1988-07-15','Marcela':'1972-07-08','Barbora':'1992-02-14','Andrea':'1994-10-29','Vladimír Z.':'1997-12-02','Peter G.':'1975-08-28','Michaela':'1985-12-21','Rebeka':'2025-06-16','Karol':'1976-07-07','Jana M.':'1968-04-29','Stanislav':'1964-04-11','Tomáš M.':'1991-02-10','Lukáš':'1994-06-24','Tomáš A.':'1985-12-24','Eva':'1985-12-23'};
+      const correctInterests = {'Janka':'Starostlivosť o vlasy, varenie, hrnčiarstvo, DIY hobby','Nikolas':'Pokemon, barber','Šarlota':'Billy Eilish, Stranger Things','Pavol':'Pokemon, Lego, Sonic, Pikachu','Vladimír':'zbrane, kutilstvo','Peter':'AC/DC, Iron Maiden, F1','Zuzana':'hackovanie, knihy','Mária':'drotikovanie, hackovanie','Helena':'vojačka, psy, turistika','Marcela':'dobré jedlo a knihy','Vladimír Z.':'PC hry','Peter G.':'Karel Zeman','Michaela':'Kvetiny a home design','Karol':'AC/DC, Heavy metal','Jana M.':'Kvetiny a záhradka','Stanislav':'Ružový Gin','Tomáš M.':'Pivo a rybolov','Lukáš':'Xbox','Tomáš A.':'Real Madrid','Eva':'Foo Fighters'};
+      data.friends.forEach(f=>{
+        if(correctNDs.hasOwnProperty(f.name)) f.namedayKey=correctNDs[f.name];
+        if(correctBDs.hasOwnProperty(f.name)) f.birthday=correctBDs[f.name];
+        if(correctInterests.hasOwnProperty(f.name) && !f.interests) f.interests=correctInterests[f.name];
+      });
+    }
     if(d.finance) data.finance = Object.assign({unicredit:null,hotovost:null,ucDate:null,cashDate:null,transactions:[],balanceHistory:[]}, d.finance);
     if(d.chat && d.chat.length) data.chatHistory = d.chat.map(m=>({role:m.role,content:m.content}));
 
@@ -1891,24 +1955,22 @@ async function loadStoryInspiration(force=false){
     const apiKey = getApiKey();
 
     // Try real AI if API key available
-    if(apiKey){
-      try {
-        const prompt = `Vygeneruj krátku inšpiráciu na večerný rozprávkový príbeh pre 7-ročného chlapca menom Pavol, ktorý má rád ${topic}. Formát: riadok 1: emoji + tučný názov témy, riadok 2-3: jednoduché vysvetlenie pre dieťa s príkladom, riadok 4: prázdny, riadok 5: "💡 Nápad na príbeh:" a 1 veta nápad na dobrodružstvo. Slovenčina, max 80 slov, kreatívny.`;
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method:'POST',
-          headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
-          body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:250,messages:[{role:'user',content:prompt}]})
-        });
-        const j = await res.json();
-        if(j.content?.[0]?.text){
-          html = j.content[0].text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-          document.getElementById('storyContent').innerHTML = html;
-          document.getElementById('storyTime').textContent = 'AI · ' + String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-          localStorage.setItem(todayKey, html);
-          return;
-        }
-      } catch(e){ console.warn('AI story error:', e); }
-    }
+    try {
+      const prompt = `Vygeneruj krátku inšpiráciu na večerný rozprávkový príbeh pre 7-ročného chlapca menom Pavol, ktorý má rád ${topic}. Formát: riadok 1: emoji + tučný názov témy, riadok 2-3: jednoduché vysvetlenie pre dieťa s príkladom, riadok 4: prázdny, riadok 5: "💡 Nápad na príbeh:" a 1 veta nápad na dobrodružstvo. Slovenčina, max 80 slov, kreatívny.`;
+      const res = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ action: 'story', prompt })
+      });
+      const j = await res.json();
+      if(j.ok && j.text){
+        html = j.text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+        document.getElementById('storyContent').innerHTML = html;
+        document.getElementById('storyTime').textContent = 'AI · ' + String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+        localStorage.setItem(todayKey, html);
+        return;
+      }
+    } catch(e){ console.warn('Worker story error:', e); }
 
     // Local story bank — used when API key not available
     const stories = [
