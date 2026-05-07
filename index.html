@@ -1944,11 +1944,46 @@ async function loadStoryInspiration(force=false){
 
   document.getElementById('storyContent').innerHTML = '<span style="color:var(--muted)">Generujem inšpiráciu… <span class="spinner"></span></span>';
 
-  const topics = [
-    'fyzikálna vlastnosť alebo jav (gravitácia, magnetizmus, svetlo, zvuk, elektrická energia, teplo, tlak, optika, jadro atómu, kvantová fyzika, relativity, termoodynamika)',
-    'zaujímavý matematický koncept (prvočísla, Fibonacciho postupnosť, nekonečno, pravdepodobnosť, fraktály, zlatý rez, Pythagorova veta, symetria, topológia)'
+  // Konkrétne témy — fyzika, matematika, zábavné úlohy
+  const allTopics = [
+    // Fyzika
+    'gravitácia','magnetizmus','svetlo a farby','zvuk a vibrácie','elektrina',
+    'teplo a chlad','tlak vzduchu','optika a zrkadlá','atómy a molekuly',
+    'vesmír a planéty','čas a rýchlosť','voda a skupenstvá','vulkány a zemetrasenia',
+    'dúha a lom svetla','elektromagnetizmus','čierne diery','raketové motory',
+    'sonar a delfíny','bioluminiscencia','supravodivosť',
+    // Matematika
+    'prvočísla','nekonečno','pravdepodobnosť a náhoda','fraktály',
+    'zlatý rez','Pythagorova veta','symetria','geometria a tvary',
+    'binárna sústava','permutácie a kombinácie','číslo PI','Möbiova plocha',
+    'Pascalov trojuholník','magické štvorce','tessellácia a mozaiky',
+    // Zábavné matematické úlohy
+    'rébus: ak má Pavol 3 vrecia jabĺk a v každom je dvakrát toľko jabĺk ako vriec, koľko jabĺk má spolu?',
+    'hádanka: číslo keď ho zdvojnásobíš a prirátaš 6 dostaneš 20 — aké je to číslo?',
+    'logika: 5 detí stojí v rade, Pavol je tretí, koľko detí stojí za ním?',
+    'rébus: vlak ide 60 km za hodinu, za koľko minút prejde 30 km?',
+    'hádanka: súčet dvoch čísel je 15 a ich rozdiel je 3 — aké sú to čísla?',
+    'logika: ak každý deň vypijú 2 litre, koľko litrov vypiješ za týždeň?',
+    'rébus: Pavol má 24 lego kociek a chce postaviť 4 rovnaké veže — koľko kociek má každá veža?',
+    'hádanka: som párne číslo, väčšie ako 10 a menšie ako 20, deliteľné 3 — aké som?',
+    'logika: v triede je 12 chlapcov a 8 dievčat — koľko percent sú chlapci?',
+    'rébus: Pokémon má 6 nôh a 2 krídla — koľko končatín má dokopy?',
   ];
-  const topic = topics[Math.floor(Math.random() * topics.length)];
+
+  // Sleduj posledné použité témy aby sa neopakovali
+  const usedKey = 'story-used-topics';
+  let usedTopics = [];
+  try { usedTopics = JSON.parse(localStorage.getItem(usedKey)||'[]'); } catch(e){}
+
+  // Vyber tému ktorá nebola posledných 10 krát použitá
+  const available = allTopics.filter(t => !usedTopics.includes(t));
+  const pool = available.length > 0 ? available : allTopics;
+  const topic = pool[Math.floor(Math.random() * pool.length)];
+
+  // Uložiť použitú tému
+  usedTopics.push(topic);
+  if(usedTopics.length > 10) usedTopics.shift();
+  localStorage.setItem(usedKey, JSON.stringify(usedTopics));
 
   try {
     let html = '';
@@ -1956,7 +1991,7 @@ async function loadStoryInspiration(force=false){
 
     // Try real AI if API key available
     try {
-      const prompt = `Vygeneruj krátku inšpiráciu na večerný rozprávkový príbeh pre 7-ročného chlapca menom Pavol, ktorý má rád ${topic}. Formát: riadok 1: emoji + tučný názov témy, riadok 2-3: jednoduché vysvetlenie pre dieťa s príkladom, riadok 4: prázdny, riadok 5: "💡 Nápad na príbeh:" a 1 veta nápad na dobrodružstvo. Slovenčina, max 80 slov, kreatívny.`;
+      const prompt = `Vygeneruj inšpiráciu na večerný príbeh pre 7-ročného Pavla. Téma: **${topic}**. Táto konkrétna téma musí byť ústrednou myšlienkou. Formát: riadok 1: emoji + tučný názov (${topic}), riadok 2-3: vysvetlenie pre 7-ročné dieťa s konkrétnym príkladom z každodenného života, riadok 4: prázdny, riadok 5: "💡 Nápad na príbeh:" + 1 veta s dobrodružnou zápletkou. Max 80 slov, slovenčina, kreatívny.`;
       const res = await fetch(WORKER_URL, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
